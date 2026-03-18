@@ -202,7 +202,14 @@ export class Game extends Phaser.Scene {
     ], true);
 
     // Right face (slightly darker)
-    g.fillStyle(color, 0.8);
+    g.fillStyle(color, 1);
+    g.fillPoints([
+      { x: 0, y: h/4 },
+      { x: w/2, y: 0 },
+      { x: w/2, y: -h*0.75 },
+      { x: 0, y: -h/2 }
+    ], true);
+    g.fillStyle(0x000000, 0.3); // Darken overlay
     g.fillPoints([
       { x: 0, y: h/4 },
       { x: w/2, y: 0 },
@@ -211,7 +218,14 @@ export class Game extends Phaser.Scene {
     ], true);
 
     // Top face (lighter)
-    g.fillStyle(color, 1.2);
+    g.fillStyle(color, 1);
+    g.fillPoints([
+      { x: -w/2, y: -h*0.75 },
+      { x: 0, y: -h },
+      { x: w/2, y: -h*0.75 },
+      { x: 0, y: -h/2 }
+    ], true);
+    g.fillStyle(0xffffff, 0.2); // Lighten overlay
     g.fillPoints([
       { x: -w/2, y: -h*0.75 },
       { x: 0, y: -h },

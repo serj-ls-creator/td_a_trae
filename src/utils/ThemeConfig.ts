@@ -17,7 +17,7 @@ export const THEME: any = {
   KUROMI_PINK: 0xff66cc,
   FONT: "'Courier New', Courier, monospace",
   // Decor Colors
-  BUILDING_COLORS: [0x4a3728, 0x8b7355, 0x5a5a5a], // Dark brown, Sand, Grey
+  BUILDING_COLORS: [0x4a2c5a, 0x2c3e50, 0x5d4037, 0x78281f], // Purple, Slate, Brown, Crimson
   WINDOW_YELLOW: 0xffff00,
   TREE_TRUNK: 0x3d2b1f,
   TREE_LEAVES: 0x228b22,
