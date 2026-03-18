@@ -35,7 +35,10 @@ export class WaveManager extends Phaser.Events.EventEmitter {
 
   spawnEnemy() {
     const enemyConfig = CONSTANTS.ENEMIES[Phaser.Math.Between(0, CONSTANTS.ENEMIES.length - 1)];
-    const enemy = new Enemy(this.scene, this.path[0].x, this.path[0].y, enemyConfig.key, enemyConfig, this.path);
+    const startPoint = this.path[0];
+    if (!startPoint) return;
+    
+    const enemy = new Enemy(this.scene, startPoint.x, startPoint.y, enemyConfig.key, enemyConfig, this.path);
     
     enemy.on('reachedEnd', () => this.emit('enemyReachedEnd'));
     enemy.on('killed', (reward: number) => this.emit('enemyKilled', reward));

@@ -1,13 +1,11 @@
 import Phaser from 'phaser';
-import { CONSTANTS } from '../utils/Constants';
+import { CONSTANTS, TowerConfig } from '../utils/Constants';
 import { Enemy } from '../entities/Enemy';
 import { Tower } from '../entities/Tower';
 import { WaveManager } from '../managers/WaveManager';
 import { UIManager } from '../managers/UIManager';
 
 import { THEME } from '../utils/ThemeConfig';
-
-import { TowerConfig } from '../utils/Constants';
 
 interface GridCell {
   isPath: boolean;
@@ -38,7 +36,7 @@ export class Game extends Phaser.Scene {
 
   create() {
     this.isGameOver = false;
-    this.cameras.main.setBackgroundColor(THEME.BACKGROUND);
+    this.cameras.main.setBackgroundColor(THEME.BACKGROUND as any);
     this.createIsometricMap();
     this.enemies = this.add.group({ classType: Enemy });
     this.towers = this.add.group({ classType: Tower });
@@ -131,26 +129,36 @@ export class Game extends Phaser.Scene {
     graphics.lineStyle(2, THEME.PATH_GLOW, 0.4);
     graphics.setDepth(-500);
     for (let i = 0; i < this.path.length - 1; i++) {
-      graphics.lineBetween(this.path[i].x, this.path[i].y, this.path[i + 1].x, this.path[i + 1].y);
+      const p1 = this.path[i];
+      const p2 = this.path[i + 1];
+      if (p1 && p2) {
+        graphics.lineBetween(p1.x, p1.y, p2.x, p2.y);
+      }
     }
 
     // Add Portal and Chest at start and end of path
     if (this.path.length > 0) {
-      const portal = this.add.image(this.path[0].x, this.path[0].y, 'portal').setScale(0.8).setOrigin(0.5, 0.8);
-      portal.setDepth(portal.y);
-      if (portal.postFX) portal.postFX.addGlow(THEME.UI_ACCENT, 2, 0);
+      const startPoint = this.path[0];
+      const endPoint = this.path[this.path.length - 1];
       
-      const chest = this.add.image(this.path[this.path.length - 1].x, this.path[this.path.length - 1].y, 'chest').setScale(0.8).setOrigin(0.5, 0.8);
-      chest.setDepth(chest.y);
-      if (chest.postFX) chest.postFX.addGlow(THEME.UI_ACCENT, 2, 0);
+      if (startPoint && endPoint) {
+        const portal = this.add.image(startPoint.x, startPoint.y, 'portal').setScale(0.8).setOrigin(0.5, 0.8);
+        portal.setDepth(portal.y);
+        if (portal.postFX) portal.postFX.addGlow(THEME.UI_ACCENT, 2, 0);
+        
+        const chest = this.add.image(endPoint.x, endPoint.y, 'chest').setScale(0.8).setOrigin(0.5, 0.8);
+        chest.setDepth(chest.y);
+        if (chest.postFX) chest.postFX.addGlow(THEME.UI_ACCENT, 2, 0);
 
-      this.createKuromi(this.path[this.path.length - 1].x + 40, this.path[this.path.length - 1].y);
+        this.createKuromi(endPoint.x + 40, endPoint.y);
+      }
     }
   }
 
   private spawnObstacles() {
     const mapSize = CONSTANTS.MAP_SIZE;
     const lastPoint = CONSTANTS.PATH_POINTS[CONSTANTS.PATH_POINTS.length - 1];
+    if (!lastPoint) return;
 
     for (let row = 0; row < mapSize; row++) {
       for (let col = 0; col < mapSize; col++) {
@@ -178,7 +186,7 @@ export class Game extends Phaser.Scene {
   private createHouse(x: number, y: number) {
     const container = this.add.container(x, y);
     const g = this.add.graphics();
-    const color = Phaser.Utils.Array.GetRandom(THEME.BUILDING_COLORS);
+    const color = Phaser.Utils.Array.GetRandom(THEME.BUILDING_COLORS) as number;
 
     // Isometric Cube Base
     const w = 40;
@@ -363,7 +371,7 @@ export class Game extends Phaser.Scene {
   }
 
   private placeTower(row: number, col: number) {
-    const towerConfig = this.uiManager.selectedTower;
+    const towerConfig: TowerConfig | null = this.uiManager.selectedTower;
     if (!towerConfig) return;
 
     const cell = this.grid[`${row},${col}`];
@@ -416,7 +424,7 @@ export class Game extends Phaser.Scene {
       fontSize: '64px', 
       color: '#0f0',
       fontFamily: THEME.FONT
-    }).setOrigin(0.5).setDepth(2001);
+    } as any).setOrigin(0.5).setDepth(2001);
 
     this.add.text(width / 2, height / 2 + 80, 'Заново', { 
       fontSize: '32px', 
@@ -424,7 +432,7 @@ export class Game extends Phaser.Scene {
       backgroundColor: THEME.UI_BG,
       padding: { x: 20, y: 10 },
       fontFamily: THEME.FONT
-    }).setOrigin(0.5).setDepth(2001)
+    } as any).setOrigin(0.5).setDepth(2001)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         this.scene.start('Game');
@@ -445,7 +453,7 @@ export class Game extends Phaser.Scene {
       fontSize: '64px', 
       color: '#f00',
       fontFamily: THEME.FONT
-    }).setOrigin(0.5).setDepth(2001);
+    } as any).setOrigin(0.5).setDepth(2001);
 
     this.add.text(width / 2, height / 2 + 80, 'Заново', { 
       fontSize: '32px', 
@@ -453,7 +461,7 @@ export class Game extends Phaser.Scene {
       backgroundColor: THEME.UI_BG,
       padding: { x: 20, y: 10 },
       fontFamily: THEME.FONT
-    }).setOrigin(0.5).setDepth(2001)
+    } as any).setOrigin(0.5).setDepth(2001)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         this.scene.start('Game');

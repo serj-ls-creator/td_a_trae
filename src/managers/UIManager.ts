@@ -24,8 +24,8 @@ export class UIManager extends Phaser.Events.EventEmitter {
     const container = this.scene.add.container(x, y);
     
     const bg = this.scene.add.graphics();
-    bg.fillStyle(THEME.UI_BG, 0.6);
-    bg.lineStyle(2, THEME.UI_BORDER, 1);
+    bg.fillStyle(THEME.UI_BG_HEX, 0.6);
+    bg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
     bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
     bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
 
@@ -33,7 +33,7 @@ export class UIManager extends Phaser.Events.EventEmitter {
       fontSize: '18px',
       color: THEME.UI_TEXT,
       fontFamily: THEME.FONT,
-    }).setOrigin(0.5);
+    } as any).setOrigin(0.5);
 
     if (isStart) {
       this.startButtonText = txt;
@@ -45,28 +45,28 @@ export class UIManager extends Phaser.Events.EventEmitter {
     container.on('pointerdown', () => {
       this.emit(eventName);
       bg.clear();
-      bg.fillStyle(THEME.UI_ACCENT, 0.4);
-      bg.lineStyle(3, THEME.UI_ACCENT, 1);
+      bg.fillStyle(THEME.UI_ACCENT_HEX, 0.4);
+      bg.lineStyle(3, THEME.UI_ACCENT_HEX, 1);
       bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
       bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
       this.scene.time.delayedCall(100, () => {
         bg.clear();
-        bg.fillStyle(THEME.UI_BG, 0.6);
-        bg.lineStyle(2, THEME.UI_BORDER, 1);
+        bg.fillStyle(THEME.UI_BG_HEX, 0.6);
+        bg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
         bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
         bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
       });
     });
 
     container.on('pointerover', () => {
-      bg.lineStyle(4, THEME.UI_ACCENT, 1);
+      bg.lineStyle(4, THEME.UI_ACCENT_HEX, 1);
       bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
     });
 
     container.on('pointerout', () => {
       bg.clear();
-      bg.fillStyle(THEME.UI_BG, 0.6);
-      bg.lineStyle(2, THEME.UI_BORDER, 1);
+      bg.fillStyle(THEME.UI_BG_HEX, 0.6);
+      bg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
       bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
       bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
     });
@@ -76,7 +76,7 @@ export class UIManager extends Phaser.Events.EventEmitter {
 
   private createUI() {
     const { width, height } = this.scene.scale;
-    const textStyle = { 
+    const textStyle: any = { 
       fontSize: '24px', 
       color: THEME.UI_TEXT,
       fontFamily: THEME.FONT
@@ -92,8 +92,8 @@ export class UIManager extends Phaser.Events.EventEmitter {
     const shopXStart = width / 2 - (CONSTANTS.TOWERS.length * 100) / 2;
 
     const shopBg = this.scene.add.graphics();
-    shopBg.fillStyle(THEME.UI_BG, 0.6);
-    shopBg.lineStyle(2, THEME.UI_BORDER, 1);
+    shopBg.fillStyle(THEME.UI_BG_HEX, 0.6);
+    shopBg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
     shopBg.fillRoundedRect(shopXStart - 60, shopY - 55, (CONSTANTS.TOWERS.length * 100) + 20, 110, 15);
     shopBg.strokeRoundedRect(shopXStart - 60, shopY - 55, (CONSTANTS.TOWERS.length * 100) + 20, 110, 15);
 
@@ -103,7 +103,7 @@ export class UIManager extends Phaser.Events.EventEmitter {
       const bg = this.scene.add.graphics();
       bg.fillStyle(0x000000, 0.4);
       bg.fillRoundedRect(-45, -45, 90, 90, 10);
-      bg.lineStyle(2, THEME.UI_BORDER, 0.5);
+      bg.lineStyle(2, THEME.UI_BORDER_HEX, 0.5);
       bg.strokeRoundedRect(-45, -45, 90, 90, 10);
       
       const icon = this.scene.add.image(0, -10, tower.key).setScale(0.8);
@@ -111,12 +111,12 @@ export class UIManager extends Phaser.Events.EventEmitter {
         fontSize: '12px', 
         color: THEME.UI_TEXT,
         fontFamily: THEME.FONT 
-      }).setOrigin(0.5);
+      } as any).setOrigin(0.5);
       const costText = this.scene.add.text(0, 35, `$${tower.cost}`, { 
         fontSize: '12px', 
         color: THEME.UI_ACCENT,
         fontFamily: THEME.FONT 
-      }).setOrigin(0.5);
+      } as any).setOrigin(0.5);
 
       container.add([bg, icon, nameText, costText]);
       container.setInteractive(new Phaser.Geom.Rectangle(-45, -45, 90, 90), Phaser.Geom.Rectangle.Contains);
@@ -144,12 +144,12 @@ export class UIManager extends Phaser.Events.EventEmitter {
       bg.clear();
       bg.fillStyle(0x000000, 0.4);
       bg.fillRoundedRect(-45, -45, 90, 90, 10);
-      bg.lineStyle(2, THEME.UI_BORDER, 0.5);
+      bg.lineStyle(2, THEME.UI_BORDER_HEX, 0.5);
       bg.strokeRoundedRect(-45, -45, 90, 90, 10);
     });
 
     const selectedBg = container.list[0] as Phaser.GameObjects.Graphics;
-    selectedBg.lineStyle(4, THEME.UI_ACCENT, 1);
+    selectedBg.lineStyle(4, THEME.UI_ACCENT_HEX, 1);
     selectedBg.strokeRoundedRect(-45, -45, 90, 90, 10);
     
     this.emit('towerSelected', tower);
@@ -162,7 +162,7 @@ export class UIManager extends Phaser.Events.EventEmitter {
       bg.clear();
       bg.fillStyle(0x000000, 0.4);
       bg.fillRoundedRect(-45, -45, 90, 90, 10);
-      bg.lineStyle(2, THEME.UI_BORDER, 0.5);
+      bg.lineStyle(2, THEME.UI_BORDER_HEX, 0.5);
       bg.strokeRoundedRect(-45, -45, 90, 90, 10);
     });
   }

@@ -35,7 +35,7 @@ export class Preload extends Phaser.Scene {
     this.createEmojiTexture('projectile_flower', '✨');
     this.createEmojiTexture('projectile_monkey', '🍌');
     this.createEmojiTexture('projectile_ghost', '🔮');
-    this.createEmojiTexture('projectile_fan', '�');
+    this.createEmojiTexture('projectile_fan', '💨');
     this.createEmojiTexture('chest', '🎀');
     this.createEmojiTexture('portal', '🌀');
     this.createEmojiTexture('slime', '😈');
@@ -47,7 +47,7 @@ export class Preload extends Phaser.Scene {
   }
 
   private createEmojiTexture(key: string, emoji: string) {
-    const textConfig: Phaser.Types.GameObjects.Text.TextConfig = {
+    const text = this.make.text({
       x: 32,
       y: 32,
       text: emoji,
@@ -55,9 +55,8 @@ export class Preload extends Phaser.Scene {
         fontSize: '48px',
         fontFamily: 'Arial',
         color: '#ffffff',
-      }
-    };
-    const text = this.make.text(textConfig).setOrigin(0.5);
+      } as any
+    }).setOrigin(0.5);
     
     const rt = this.add.renderTexture(0, 0, 64, 64);
     rt.draw(text, 32, 32);
@@ -70,9 +69,9 @@ export class Preload extends Phaser.Scene {
     const w = 64;
     const h = 32;
     
-    const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+    const graphics = this.make.graphics({ x: 0, y: 0, add: false } as any);
     graphics.lineStyle(2, 0xa333ff, 1);
-    graphics.fillStyle(0x34895aff, 1); // Ground color #34895aff
+    graphics.fillStyle(0x30302a, 1); // Corrected color to #30302a
     
     const points = [
       { x: w / 2, y: 0 },
