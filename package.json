@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && npx vite build",
+    "build": "npx tsc && npx vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "typescript": "^5.2.2",
     "vite": "^5.0.0"
   },
   "dependencies": {
-    "phaser": "^3.80.1"
+    "phaser": "^3.80.1",
+    "typescript": "^5.2.2"
   }
 }
