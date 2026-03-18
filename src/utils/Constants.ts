@@ -21,8 +21,8 @@ export interface PathPoint {
 }
 
 export const CONSTANTS = {
-  TILE_WIDTH: 64,
-  TILE_HEIGHT: 32,
+  TILE_WIDTH: 128,
+  TILE_HEIGHT: 64,
   MAP_SIZE: 10,
   PATH_POINTS: [
     { row: 1, col: 1 },
@@ -34,10 +34,10 @@ export const CONSTANTS = {
     { row: 9, col: 8 }
   ] as PathPoint[],
   TOWERS: [
-    { name: 'Flower', cost: 25, damage: 10, range: 50, fireRate: 1000, key: 'flower' },
-    { name: 'Monkey', cost: 50, damage: 20, range: 66, fireRate: 1500, key: 'monkey' },
-    { name: 'Ghost', cost: 75, damage: 30, range: 83, fireRate: 2000, key: 'ghost' },
-    { name: 'Fan', cost: 100, damage: 40, range: 100, fireRate: 2500, key: 'fan' }
+    { name: 'Flower', cost: 25, damage: 10, range: 100, fireRate: 1000, key: 'flower' },
+    { name: 'Monkey', cost: 50, damage: 20, range: 132, fireRate: 1500, key: 'monkey' },
+    { name: 'Ghost', cost: 75, damage: 30, range: 166, fireRate: 2000, key: 'ghost' },
+    { name: 'Fan', cost: 100, damage: 40, range: 200, fireRate: 2500, key: 'fan' }
   ] as TowerConfig[],
   ENEMIES: [
     { name: 'Slime', hp: 60, speed: 1.5, reward: 10, key: 'slime' },

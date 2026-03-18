@@ -40,11 +40,24 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     
     const enemy = new Enemy(this.scene, startPoint.x, startPoint.y, enemyConfig.key, enemyConfig, this.path);
     
-    enemy.on('reachedEnd', () => this.emit('enemyReachedEnd'));
-    enemy.on('killed', (reward: number) => this.emit('enemyKilled', reward));
+    enemy.on('reachedEnd', () => {
+      this.emit('enemyReachedEnd');
+      this.checkWaveProgress();
+    });
+    enemy.on('killed', (reward: number) => {
+      this.emit('enemyKilled', reward);
+      this.checkWaveProgress();
+    });
     
     this.enemiesSpawned++;
     this.emit('enemySpawned', enemy);
+    this.checkWaveProgress();
+  }
+
+  private checkWaveProgress() {
+    // Wave is fully finished when all enemies are spawned AND all are either killed or reached end
+    // But for UI we might just want to count active ones
+    this.emit('waveProgress', this.enemiesSpawned, this.enemiesInWave);
   }
 
   isWaveComplete() {

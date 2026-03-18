@@ -21,7 +21,7 @@ export class Tower extends Phaser.GameObjects.Sprite {
     this.fireRate = config.fireRate;
     this.damage = config.damage;
     this.setOrigin(0.5, 0.8);
-    this.setScale(0.8);
+    this.setScale(1.6);
     
     // Add Neon Glow
     if (this.postFX) {
@@ -79,6 +79,15 @@ export class Tower extends Phaser.GameObjects.Sprite {
       const projectileKey = `projectile_${this.config.key}`;
       const projectile = new Projectile(this.scene, this.x, this.y - 40, projectileKey, this.damage, this.target);
       projectiles.add(projectile);
+
+      // Visual feedback: Recoil
+      this.scene.tweens.add({
+        targets: this,
+        y: this.y + 10,
+        duration: 50,
+        yoyo: true,
+        ease: 'Cubic.easeOut'
+      });
     }
   }
 

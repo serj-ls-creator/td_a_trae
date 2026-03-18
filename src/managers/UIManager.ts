@@ -6,6 +6,7 @@ export class UIManager extends Phaser.Events.EventEmitter {
   private scene: Phaser.Scene;
   private moneyText!: Phaser.GameObjects.Text;
   private waveText!: Phaser.GameObjects.Text;
+  private enemiesText!: Phaser.GameObjects.Text;
   private lifeText!: Phaser.GameObjects.Text;
   private towerButtons: Phaser.GameObjects.Container[] = [];
   public selectedTower: any = null;
@@ -22,6 +23,8 @@ export class UIManager extends Phaser.Events.EventEmitter {
     const btnH = 50;
 
     const container = this.scene.add.container(x, y);
+    container.setScrollFactor(0);
+    container.setDepth(10000); // UI always on top
     
     const bg = this.scene.add.graphics();
     bg.fillStyle(THEME.UI_BG_HEX, 0.6);
@@ -82,16 +85,21 @@ export class UIManager extends Phaser.Events.EventEmitter {
       fontFamily: THEME.FONT
     };
 
-    // Top UI
-    this.moneyText = this.scene.add.text(20, 20, 'Money: $100', textStyle);
-    this.waveText = this.scene.add.text(width / 2, 20, 'Wave: 1', textStyle).setOrigin(0.5, 0);
-    this.lifeText = this.scene.add.text(width - 250, 20, 'Bow HP: 100%', textStyle);
+    // Top Left UI
+    this.moneyText = this.scene.add.text(20, 20, 'Money: $100', textStyle).setScrollFactor(0).setDepth(10000);
+    
+    // Top Right UI
+    this.lifeText = this.scene.add.text(width - 20, 20, 'Bow HP: 100%', textStyle).setScrollFactor(0).setDepth(10000).setOrigin(1, 0);
+    this.waveText = this.scene.add.text(width - 20, 60, 'Wave: 1', textStyle).setScrollFactor(0).setDepth(10000).setOrigin(1, 0);
+    this.enemiesText = this.scene.add.text(width - 20, 100, 'Enemies: 0/0', { ...textStyle, fontSize: '18px' }).setScrollFactor(0).setDepth(10000).setOrigin(1, 0);
 
-    // Bottom UI - Tower Shop
+    // Bottom Left UI - Tower Shop
     const shopY = height - 100;
-    const shopXStart = width / 2 - (CONSTANTS.TOWERS.length * 100) / 2;
+    const shopXStart = 60; // Moved from 80 to 60 to be more to the left
 
     const shopBg = this.scene.add.graphics();
+    shopBg.setScrollFactor(0);
+    shopBg.setDepth(9999);
     shopBg.fillStyle(THEME.UI_BG_HEX, 0.6);
     shopBg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
     shopBg.fillRoundedRect(shopXStart - 60, shopY - 55, (CONSTANTS.TOWERS.length * 100) + 20, 110, 15);
@@ -99,6 +107,8 @@ export class UIManager extends Phaser.Events.EventEmitter {
 
     CONSTANTS.TOWERS.forEach((tower, index) => {
       const container = this.scene.add.container(shopXStart + index * 100, shopY);
+      container.setScrollFactor(0);
+      container.setDepth(10000);
       
       const bg = this.scene.add.graphics();
       bg.fillStyle(0x000000, 0.4);
@@ -128,9 +138,9 @@ export class UIManager extends Phaser.Events.EventEmitter {
       this.towerButtons.push(container);
     });
 
-    // Start and Wave Buttons
-    const btnStartX = width - 180;
-    const btnWaveX = width - 70;
+    // Start and Wave Buttons (Bottom Right)
+    const btnStartX = width - 200;
+    const btnWaveX = width - 80;
     const btnY = height - 100;
 
     this.createButton(btnStartX, btnY, 'START', 'startWave', true);
@@ -175,7 +185,11 @@ export class UIManager extends Phaser.Events.EventEmitter {
     this.waveText.setText(`Wave: ${wave}`);
   }
 
- public updateLives(lives: number) {
+  updateWaveProgress(spawned: number, total: number) {
+    this.enemiesText.setText(`Enemies: ${spawned}/${total}`);
+  }
+
+  updateLives(lives: number) {
     const percentage = Math.max(0, (lives / 20) * 100);
     this.lifeText.setText(`Bow HP: ${percentage}%`);
   }

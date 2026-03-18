@@ -66,12 +66,12 @@ export class Preload extends Phaser.Scene {
 
   private createNeonTile() {
     // Draw isometric diamond
-    const w = 64;
-    const h = 32;
+    const w = 128;
+    const h = 64;
     
     const graphics = this.make.graphics({ x: 0, y: 0, add: false } as any);
     graphics.lineStyle(2, 0xa333ff, 1);
-    graphics.fillStyle(0x30302a, 1); // Corrected color to #30302a
+    graphics.fillStyle(0x30302a, 1); 
     
     const points = [
       { x: w / 2, y: 0 },

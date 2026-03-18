@@ -13,7 +13,7 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
     this.damage = damage;
     this.target = target;
-    this.setScale(0.6);
+    this.setScale(1.2);
     
     if (this.postFX) {
       this.postFX.addGlow(THEME.TOWER_GLOW, 1, 0);

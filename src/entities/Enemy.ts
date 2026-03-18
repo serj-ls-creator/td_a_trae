@@ -21,7 +21,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.path = path;
     this.healthBar = scene.add.graphics();
     this.setOrigin(0.5, 0.8);
-    this.setScale(0.5);
+    this.setScale(1.0);
   }
 
   update() {
@@ -49,14 +49,17 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.healthBar.clear();
     this.healthBar.setDepth(this.depth + 1);
     this.healthBar.fillStyle(0x000000, 0.5);
-    this.healthBar.fillRect(this.x - 20, this.y - 40, 40, 5);
+    this.healthBar.fillRect(this.x - 40, this.y - 80, 80, 10);
     this.healthBar.fillStyle(0xff0000, 1);
-    this.healthBar.fillRect(this.x - 20, this.y - 40, (this.hp / this.maxHp) * 40, 5);
+    this.healthBar.fillRect(this.x - 40, this.y - 80, (this.hp / this.maxHp) * 80, 10);
   }
 
   takeDamage(amount: number) {
     this.hp -= amount;
     
+    // Show damage text
+    this.showDamage(amount);
+
     // Flash effect
     this.setTint(0xffffff);
     this.scene.time.delayedCall(100, () => {
@@ -67,6 +70,26 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.hp = 0;
       this.die();
     }
+  }
+
+  private showDamage(amount: number) {
+    const text = this.scene.add.text(this.x, this.y - 40, `-${amount}`, {
+      fontSize: '20px',
+      color: '#ff0000',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3
+    } as any).setOrigin(0.5);
+    text.setDepth(3000);
+
+    this.scene.tweens.add({
+      targets: text,
+      y: text.y - 50,
+      alpha: 0,
+      duration: 800,
+      ease: 'Power2',
+      onComplete: () => text.destroy()
+    });
   }
 
   private die() {

@@ -37,7 +37,22 @@ export class Game extends Phaser.Scene {
   create() {
     this.isGameOver = false;
     this.cameras.main.setBackgroundColor(THEME.BACKGROUND as any);
+    this.cameras.main.setZoom(0.9);
     this.createIsometricMap();
+    
+    // Автоматический расчет центра сетки
+    const mapSize = CONSTANTS.MAP_SIZE;
+    const tileH = CONSTANTS.TILE_HEIGHT;
+    const { width, height } = this.scale;
+    const offsetX = width / 2;
+    const offsetY = height / 2;
+
+    // Центр сетки в изометрических координатах
+    // Среднее между (0,0), (0, 9), (9, 0) и (9, 9)
+    const centerX = offsetX; // В изометрии по X центр всегда совпадает с offsetX при симметричной сетке
+    const centerY = offsetY + (mapSize - 1) * (tileH / 2); // Смещение центра сетки по Y
+
+    this.cameras.main.centerOn(centerX, centerY);
     this.enemies = this.add.group({ classType: Enemy });
     this.towers = this.add.group({ classType: Tower });
     this.projectiles = this.add.group();
@@ -56,7 +71,7 @@ export class Game extends Phaser.Scene {
     this.grid = {};
 
     const offsetX = width / 2;
-    const offsetY = height / 4;
+    const offsetY = height / 2; // Center the map
 
     // Convert row/col points to world coordinates for waypoints
     this.path = CONSTANTS.PATH_POINTS.map(p => {
@@ -142,15 +157,15 @@ export class Game extends Phaser.Scene {
       const endPoint = this.path[this.path.length - 1];
       
       if (startPoint && endPoint) {
-        const portal = this.add.image(startPoint.x, startPoint.y, 'portal').setScale(0.8).setOrigin(0.5, 0.8);
+        const portal = this.add.image(startPoint.x, startPoint.y, 'portal').setScale(1.6).setOrigin(0.5, 0.8);
         portal.setDepth(portal.y);
         if (portal.postFX) portal.postFX.addGlow(THEME.UI_ACCENT, 2, 0);
         
-        const chest = this.add.image(endPoint.x, endPoint.y, 'chest').setScale(0.8).setOrigin(0.5, 0.8);
+        const chest = this.add.image(endPoint.x, endPoint.y, 'chest').setScale(1.6).setOrigin(0.5, 0.8);
         chest.setDepth(chest.y);
         if (chest.postFX) chest.postFX.addGlow(THEME.UI_ACCENT, 2, 0);
 
-        this.createKuromi(endPoint.x + 40, endPoint.y);
+        this.createKuromi(endPoint.x + 80, endPoint.y);
       }
     }
   }
@@ -189,8 +204,8 @@ export class Game extends Phaser.Scene {
     const color = Phaser.Utils.Array.GetRandom(THEME.BUILDING_COLORS) as number;
 
     // Isometric Cube Base
-    const w = 40;
-    const h = 40;
+    const w = 80;
+    const h = 80;
     
     // Front face
     g.fillStyle(color, 1);
@@ -235,10 +250,10 @@ export class Game extends Phaser.Scene {
 
     // Windows (yellow squares)
     g.fillStyle(THEME.WINDOW_YELLOW);
-    g.fillRect(-12, -20, 4, 4);
-    g.fillRect(-12, -10, 4, 4);
-    g.fillRect(8, -20, 4, 4);
-    g.fillRect(8, -10, 4, 4);
+    g.fillRect(-24, -40, 8, 8);
+    g.fillRect(-24, -20, 8, 8);
+    g.fillRect(16, -40, 8, 8);
+    g.fillRect(16, -20, 8, 8);
 
     container.add(g);
     container.setDepth(y);
@@ -250,13 +265,13 @@ export class Game extends Phaser.Scene {
 
     // Trunk
     g.fillStyle(THEME.TREE_TRUNK);
-    g.fillRect(-3, -15, 6, 15);
+    g.fillRect(-6, -30, 12, 30);
 
     // Leaves (isometric diamond)
     g.fillStyle(THEME.TREE_LEAVES);
-    const w = 30;
-    const h = 20;
-    const ly = -25;
+    const w = 60;
+    const h = 40;
+    const ly = -50;
     g.fillPoints([
       { x: 0, y: ly - h/2 },
       { x: w/2, y: ly },
@@ -268,6 +283,22 @@ export class Game extends Phaser.Scene {
     container.setDepth(y);
   }
 
+  private createDeathEffect(x: number, y: number) {
+    const particles = this.add.particles(x, y, 'flower', {
+      speed: { min: -100, max: 100 },
+      scale: { start: 0.2, end: 0 },
+      alpha: { start: 0.8, end: 0 },
+      tint: [0xff00ff, 0x00ffff, 0xffffff],
+      lifespan: 600,
+      quantity: 10,
+      emitting: false
+    });
+    particles.setDepth(3000);
+    particles.explode();
+    
+    this.time.delayedCall(1000, () => particles.destroy());
+  }
+
   private createKuromi(x: number, y: number) {
     this.kuromiContainer = this.add.container(x, y);
     const g = this.add.graphics();
@@ -275,27 +306,27 @@ export class Game extends Phaser.Scene {
     // Simple Kuromi style character
     // Hat/Head
     g.fillStyle(THEME.KUROMI_BLACK);
-    g.fillEllipse(0, -10, 30, 25);
+    g.fillEllipse(0, -20, 60, 50);
     // Ears
-    g.fillTriangle(-15, -20, -5, -15, -20, -35);
-    g.fillTriangle(15, -20, 5, -15, 20, -35);
+    g.fillTriangle(-30, -40, -10, -30, -40, -70);
+    g.fillTriangle(30, -40, 10, -30, 40, -70);
     
     // Face (white area)
     g.fillStyle(0xffffff);
-    g.fillEllipse(0, -5, 20, 15);
+    g.fillEllipse(0, -10, 40, 30);
     
     // Eyes
     g.fillStyle(THEME.KUROMI_BLACK);
-    g.fillCircle(-6, -6, 2);
-    g.fillCircle(6, -6, 2);
+    g.fillCircle(-12, -12, 4);
+    g.fillCircle(12, -12, 4);
     
     // Body/Dress
     g.fillStyle(THEME.KUROMI_PURPLE);
-    g.fillTriangle(-10, 0, 10, 0, 0, 20);
+    g.fillTriangle(-20, 0, 20, 0, 0, 40);
     
     // Skull on hat
     g.fillStyle(THEME.KUROMI_PINK);
-    g.fillCircle(0, -18, 4);
+    g.fillCircle(0, -36, 8);
     
     this.kuromiContainer.add(g);
     this.kuromiContainer.setDepth(y);
@@ -305,10 +336,18 @@ export class Game extends Phaser.Scene {
   private setupEvents() {
     this.waveManager.on('waveStart', (wave: number) => {
       this.uiManager.updateWave(wave);
+      this.uiManager.updateWaveProgress(0, wave * 5);
+    });
+
+    this.waveManager.on('waveProgress', (spawned: number, total: number) => {
+      this.uiManager.updateWaveProgress(spawned, total);
     });
 
     this.waveManager.on('enemySpawned', (enemy: Enemy) => {
       this.enemies.add(enemy);
+      enemy.on('killed', () => {
+        this.createDeathEffect(enemy.x, enemy.y);
+      });
     });
 
     this.waveManager.on('enemyKilled', (reward: number) => {
@@ -373,7 +412,7 @@ export class Game extends Phaser.Scene {
       this.ghostRange.destroy();
     }
     
-    this.ghostTower = this.add.image(0, 0, tower.key).setAlpha(0.5).setOrigin(0.5, 0.8).setScale(0.8);
+    this.ghostTower = this.add.image(0, 0, tower.key).setAlpha(0.5).setOrigin(0.5, 0.8).setScale(1.6);
     this.ghostTower.setVisible(false);
     this.ghostTower.setDepth(2001);
     
@@ -414,10 +453,11 @@ export class Game extends Phaser.Scene {
   update(time: number) {
     if (this.ghostTower && this.ghostRange) {
       const pointer = this.input.activePointer;
-      this.ghostTower.setPosition(pointer.worldX, pointer.worldY);
+      const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      this.ghostTower.setPosition(worldPoint.x, worldPoint.y);
       this.ghostTower.setVisible(true);
       
-      this.ghostRange.setPosition(pointer.worldX, pointer.worldY);
+      this.ghostRange.setPosition(worldPoint.x, worldPoint.y);
       this.ghostRange.setVisible(true);
     }
 
@@ -455,6 +495,13 @@ export class Game extends Phaser.Scene {
     // Pause physics and events, but NOT the scene so the button remains interactive
     this.physics.pause();
     this.time.removeAllEvents();
+    
+    // Fix UI in game over/win
+    this.children.each((child: any) => {
+      if (child.type === 'Text' || child.type === 'Rectangle') {
+        child.setScrollFactor(0);
+      }
+    });
   }
 
   private gameOver() {
