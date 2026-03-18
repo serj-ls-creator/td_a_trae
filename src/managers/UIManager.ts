@@ -45,7 +45,8 @@ export class UIManager extends Phaser.Events.EventEmitter {
     container.add([bg, txt]);
     container.setInteractive(new Phaser.Geom.Rectangle(-btnW/2, -btnH/2, btnW, btnH), Phaser.Geom.Rectangle.Contains);
 
-    container.on('pointerdown', () => {
+    container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event.preventDefault();
       this.emit(eventName);
       bg.clear();
       bg.fillStyle(THEME.UI_ACCENT_HEX, 0.4);
@@ -131,7 +132,8 @@ export class UIManager extends Phaser.Events.EventEmitter {
       container.add([bg, icon, nameText, costText]);
       container.setInteractive(new Phaser.Geom.Rectangle(-45, -45, 90, 90), Phaser.Geom.Rectangle.Contains);
 
-      container.on('pointerdown', () => {
+      container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        pointer.event.preventDefault();
         this.selectTower(tower, container);
       });
 
