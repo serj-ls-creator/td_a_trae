@@ -27,6 +27,7 @@ export class Game extends Phaser.Scene {
   private lives: number = 20;
   private kuromiContainer: Phaser.GameObjects.Container | null = null;
   private grid: { [key: string]: GridCell } = {};
+  private tileGroup!: Phaser.GameObjects.Group;
 
   private isGameOver: boolean = false;
 
@@ -38,6 +39,13 @@ export class Game extends Phaser.Scene {
     this.isGameOver = false;
     this.cameras.main.setBackgroundColor(THEME.BACKGROUND as any);
     this.cameras.main.setZoom(0.9);
+
+    // Инициализируем группы ДО создания карты
+    this.enemies = this.add.group({ classType: Enemy });
+    this.towers = this.add.group({ classType: Tower });
+    this.projectiles = this.add.group();
+    this.tileGroup = this.add.group();
+
     this.createIsometricMap();
     
     // Автоматический расчет центра сетки
@@ -48,14 +56,10 @@ export class Game extends Phaser.Scene {
     const offsetY = height / 2;
 
     // Центр сетки в изометрических координатах
-    // Среднее между (0,0), (0, 9), (9, 0) и (9, 9)
-    const centerX = offsetX; // В изометрии по X центр всегда совпадает с offsetX при симметричной сетке
-    const centerY = offsetY + (mapSize - 1) * (tileH / 2); // Смещение центра сетки по Y
+    const centerX = offsetX; 
+    const centerY = offsetY + (mapSize - 1) * (tileH / 2);
 
     this.cameras.main.centerOn(centerX, centerY);
-    this.enemies = this.add.group({ classType: Enemy });
-    this.towers = this.add.group({ classType: Tower });
-    this.projectiles = this.add.group();
 
     this.waveManager = new WaveManager(this, this.path);
     this.uiManager = new UIManager(this);
@@ -103,6 +107,7 @@ export class Game extends Phaser.Scene {
         this.grid[`${row},${col}`] = { isPath: onPath, isOccupied: false, x: isoX, y: isoY };
 
         const tile = this.add.image(isoX, isoY, 'tile').setOrigin(0.5, 0.5);
+        this.tileGroup.add(tile);
         tile.setDepth(-1000); // Floor is always below
         tile.setInteractive();
 
