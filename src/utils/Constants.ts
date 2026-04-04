@@ -23,16 +23,7 @@ export interface PathPoint {
 export const CONSTANTS = {
   TILE_WIDTH: 128,
   TILE_HEIGHT: 64,
-  MAP_SIZE: 10,
-  PATH_POINTS: [
-    { row: 1, col: 1 },
-    { row: 1, col: 8 },
-    { row: 4, col: 8 },
-    { row: 4, col: 1 },
-    { row: 7, col: 1 },
-    { row: 7, col: 8 },
-    { row: 9, col: 8 }
-  ] as PathPoint[],
+  MAP_SIZE: 12,
   TOWERS: [
     { name: 'Flower', cost: 25, damage: 10, range: 100, fireRate: 1000, key: 'flower' },
     { name: 'Monkey', cost: 50, damage: 20, range: 132, fireRate: 1500, key: 'monkey' },

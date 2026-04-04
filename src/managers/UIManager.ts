@@ -207,6 +207,64 @@ export class UIManager extends Phaser.Events.EventEmitter {
     });
   }
 
+  public showConfirmation(message: string, onConfirm: () => void) {
+    const { width, height } = this.scene.scale;
+    
+    const overlay = this.scene.add.graphics();
+    overlay.fillStyle(0x000000, 0.7);
+    overlay.fillRect(0, 0, width, height);
+    this.uiLayer.add(overlay);
+
+    const dialogW = 400;
+    const dialogH = 250;
+    const dialogX = width / 2;
+    const dialogY = height / 2;
+
+    const dialogContainer = this.scene.add.container(dialogX, dialogY);
+    this.uiLayer.add(dialogContainer);
+
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(THEME.UI_BG_HEX, 0.95);
+    bg.lineStyle(4, THEME.UI_BORDER_HEX, 1);
+    bg.fillRoundedRect(-dialogW/2, -dialogH/2, dialogW, dialogH, 20);
+    bg.strokeRoundedRect(-dialogW/2, -dialogH/2, dialogW, dialogH, 20);
+
+    const title = this.scene.add.text(0, -60, message, {
+      fontSize: '28px',
+      color: THEME.UI_TEXT,
+      fontFamily: THEME.FONT,
+      align: 'center',
+      wordWrap: { width: dialogW - 40 }
+    } as any).setOrigin(0.5);
+
+    const createConfirmBtn = (x: number, y: number, label: string, color: number, callback: () => void) => {
+      const btn = this.scene.add.container(x, y);
+      const bBg = this.scene.add.graphics();
+      bBg.fillStyle(color, 0.8);
+      bBg.fillRoundedRect(-80, -30, 160, 60, 10);
+      
+      const bTxt = this.scene.add.text(0, 0, label, {
+        fontSize: '24px',
+        color: '#ffffff',
+        fontFamily: THEME.FONT
+      } as any).setOrigin(0.5);
+      
+      btn.add([bBg, bTxt]);
+      btn.setInteractive(new Phaser.Geom.Rectangle(-80, -30, 160, 60), Phaser.Geom.Rectangle.Contains);
+      btn.on('pointerup', () => {
+        overlay.destroy();
+        dialogContainer.destroy();
+        callback();
+      });
+      return btn;
+    };
+
+    const yesBtn = createConfirmBtn(-100, 50, 'ДА', 0x2ecc71, onConfirm);
+    const noBtn = createConfirmBtn(100, 50, 'НЕТ', 0xe74c3c, () => {});
+
+    dialogContainer.add([bg, title, yesBtn, noBtn]);
+  }
+
   updateMoney(money: number) {
     this.currentMoney = money;
     this.moneyText.setText(`Money: $${money}`);

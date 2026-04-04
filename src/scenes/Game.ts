@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { CONSTANTS, TowerConfig } from '../utils/Constants';
+import { CONSTANTS, TowerConfig, PathPoint } from '../utils/Constants';
 import { Enemy } from '../entities/Enemy';
 import { Tower } from '../entities/Tower';
 import { WaveManager } from '../managers/WaveManager';
 import { UIManager } from '../managers/UIManager';
+import { generateRandomPath } from '../utils/PathGenerator';
 
 import { THEME } from '../utils/ThemeConfig';
 
@@ -16,6 +17,7 @@ interface GridCell {
 
 export class Game extends Phaser.Scene {
   private path: Phaser.Math.Vector2[] = [];
+  private pathPoints: PathPoint[] = [];
   private enemies!: Phaser.GameObjects.Group;
   private towers!: Phaser.GameObjects.Group;
   private projectiles!: Phaser.GameObjects.Group;
@@ -158,25 +160,19 @@ export class Game extends Phaser.Scene {
     // Calculate offsetY to center the whole map vertically
     this.offsetY = height / 2 - (mapSize - 1) * (tileH / 2);
 
+    // Generate dynamic path
+    this.pathPoints = generateRandomPath(mapSize, 32);
+
     // Convert row/col points to world coordinates for waypoints
-    this.path = CONSTANTS.PATH_POINTS.map(p => {
+    this.path = this.pathPoints.map(p => {
       const isoX = this.offsetX + (p.col - p.row) * (tileW / 2);
       const isoY = this.offsetY + (p.col + p.row) * (tileH / 2);
       return new Phaser.Math.Vector2(isoX, isoY);
     });
 
-    // Helper to check if a cell is part of the path segments
+    // Helper to check if a cell is part of the path
     const isPartOfPath = (row: number, col: number) => {
-      for (let i = 0; i < CONSTANTS.PATH_POINTS.length - 1; i++) {
-        const p1 = CONSTANTS.PATH_POINTS[i];
-        const p2 = CONSTANTS.PATH_POINTS[i + 1];
-        if (p1.row === p2.row) { // horizontal segment
-          if (row === p1.row && col >= Math.min(p1.col, p2.col) && col <= Math.max(p1.col, p2.col)) return true;
-        } else if (p1.col === p2.col) { // vertical segment
-          if (col === p1.col && row >= Math.min(p1.row, p2.row) && row <= Math.max(p1.row, p2.row)) return true;
-        }
-      }
-      return false;
+      return this.pathPoints.some(p => p.row === row && p.col === col);
     };
 
     for (let row = 0; row < mapSize; row++) {
@@ -259,7 +255,7 @@ export class Game extends Phaser.Scene {
 
   private spawnObstacles() {
     const mapSize = CONSTANTS.MAP_SIZE;
-    const lastPoint = CONSTANTS.PATH_POINTS[CONSTANTS.PATH_POINTS.length - 1];
+    const lastPoint = this.pathPoints[this.pathPoints.length - 1];
     if (!lastPoint) return;
 
     for (let row = 0; row < mapSize; row++) {
@@ -473,7 +469,9 @@ export class Game extends Phaser.Scene {
     this.uiManager.on('startWave', () => {
       // START / ЗАНОВО button: restarts the game if already started
       if (this.isGameOver || this.waveManager.getCurrentWave() > 0) {
-        this.scene.start('Game');
+        this.uiManager.showConfirmation('Начать заново?', () => {
+          this.scene.start('Game');
+        });
         return;
       }
       this.waveManager.startNextWave();
