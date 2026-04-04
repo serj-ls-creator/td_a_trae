@@ -14,7 +14,10 @@ export const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 1280,
-    height: 720,
+    height: 1280 * (window.innerHeight / window.innerWidth) > 1280 ? 1280 * (window.innerHeight / window.innerWidth) : 1280,
+  },
+  input: {
+    activePointers: 2, // Enable multi-touch (up to 2 pointers for pinch-to-zoom)
   },
   physics: {
     default: 'arcade',

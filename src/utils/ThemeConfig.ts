@@ -1,9 +1,9 @@
 export const THEME: any = {
-  BACKGROUND: '#0a0a0a',
+  BACKGROUND: '#000000',
   TILE_NEON: 0xa333ff, // Using numbers for graphics/tints
   TILE_BASE: 0x1a1a1a,
   PATH_GLOW: 0xff00ff,
-  PATH_BASE: 0x2a2a2a,
+  PATH_BASE: 0x111111,
   UI_BG: '#1a0033', // Using strings for UI/Text background
   UI_BG_HEX: 0x1a0033, // Hex number for Graphics
   UI_BORDER: '#a333ff',

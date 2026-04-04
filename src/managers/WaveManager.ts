@@ -8,11 +8,13 @@ export class WaveManager extends Phaser.Events.EventEmitter {
   private enemiesInWave: number = 0;
   private enemiesSpawned: number = 0;
   private path: Phaser.Math.Vector2[];
+  private worldLayer?: Phaser.GameObjects.Container;
 
-  constructor(scene: Phaser.Scene, path: Phaser.Math.Vector2[]) {
+  constructor(scene: Phaser.Scene, path: Phaser.Math.Vector2[], worldLayer?: Phaser.GameObjects.Container) {
     super();
     this.scene = scene;
     this.path = path;
+    this.worldLayer = worldLayer;
   }
 
   startNextWave() {
@@ -38,7 +40,7 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     const startPoint = this.path[0];
     if (!startPoint) return;
     
-    const enemy = new Enemy(this.scene, startPoint.x, startPoint.y, enemyConfig.key, enemyConfig, this.path);
+    const enemy = new Enemy(this.scene, startPoint.x, startPoint.y, enemyConfig.key, enemyConfig, this.path, this.worldLayer);
     
     enemy.on('reachedEnd', () => {
       this.emit('enemyReachedEnd');

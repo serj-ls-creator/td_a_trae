@@ -7,17 +7,19 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
   public damage: number;
   public target: Enemy;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, key: string, damage: number, target: Enemy) {
+  constructor(scene: Phaser.Scene, x: number, y: number, key: string, damage: number, target: Enemy, worldLayer?: Phaser.GameObjects.Container) {
     super(scene, x, y, key);
-    scene.add.existing(this);
+    if (worldLayer) {
+      worldLayer.add(this);
+    } else {
+      scene.add.existing(this);
+    }
     scene.physics.add.existing(this);
     this.damage = damage;
     this.target = target;
     this.setScale(1.2);
     
-    if (this.postFX) {
-      this.postFX.addGlow(THEME.TOWER_GLOW, 1, 0);
-    }
+    // Removed glow for mobile performance
   }
 
   update() {

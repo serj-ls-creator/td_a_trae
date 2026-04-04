@@ -12,10 +12,16 @@ export class Tower extends Phaser.GameObjects.Sprite {
   public damage: number;
   public target: Enemy | null = null;
   public rangeGraphic: Phaser.GameObjects.Graphics;
+  private worldLayer?: Phaser.GameObjects.Container;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, key: string, config: any) {
+  constructor(scene: Phaser.Scene, x: number, y: number, key: string, config: any, worldLayer?: Phaser.GameObjects.Container) {
     super(scene, x, y, key);
-    scene.add.existing(this);
+    this.worldLayer = worldLayer;
+    if (worldLayer) {
+      worldLayer.add(this);
+    } else {
+      scene.add.existing(this);
+    }
     this.config = config;
     this.range = config.range;
     this.fireRate = config.fireRate;
@@ -23,12 +29,10 @@ export class Tower extends Phaser.GameObjects.Sprite {
     this.setOrigin(0.5, 0.8);
     this.setScale(1.6);
     
-    // Add Neon Glow
-    if (this.postFX) {
-      this.postFX.addGlow(THEME.TOWER_GLOW, 2, 0);
-    }
+    // Removed glow for mobile performance
 
     this.rangeGraphic = scene.add.graphics();
+    if (worldLayer) worldLayer.add(this.rangeGraphic);
     this.rangeGraphic.lineStyle(2, THEME.TILE_NEON, 0.5);
     this.rangeGraphic.strokeCircle(this.x, this.y, this.range);
     this.rangeGraphic.setVisible(false);
@@ -77,7 +81,7 @@ export class Tower extends Phaser.GameObjects.Sprite {
   fire(projectiles: Phaser.GameObjects.Group) {
     if (this.target) {
       const projectileKey = `projectile_${this.config.key}`;
-      const projectile = new Projectile(this.scene, this.x, this.y - 40, projectileKey, this.damage, this.target);
+      const projectile = new Projectile(this.scene, this.x, this.y - 40, projectileKey, this.damage, this.target, this.worldLayer);
       projectiles.add(projectile);
 
       // Visual feedback: Recoil

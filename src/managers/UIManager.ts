@@ -11,29 +11,40 @@ export class UIManager extends Phaser.Events.EventEmitter {
   private towerButtons: Phaser.GameObjects.Container[] = [];
   public selectedTower: any = null;
   private startButtonText!: Phaser.GameObjects.Text;
+  private uiLayer: Phaser.GameObjects.Container;
+  private currentMoney: number = 100;
 
   constructor(scene: Phaser.Scene) {
     super();
     this.scene = scene;
+    this.uiLayer = this.scene.add.container(0, 0);
+    this.uiLayer.setScrollFactor(0);
+    this.uiLayer.setDepth(10000);
     this.createUI();
   }
 
+  public getUILayer() {
+    return this.uiLayer;
+  }
+
   private createButton(x: number, y: number, text: string, eventName: string, isStart: boolean) {
-    const btnW = 100;
-    const btnH = 50;
+    const isDesktop = this.scene.sys.game.device.os.desktop;
+    const btnW = isDesktop ? 100 : 130;
+    const btnH = isDesktop ? 40 : 65;
+    const fontSize = isDesktop ? '16px' : '22px';
+    const borderRadius = isDesktop ? 10 : 16;
 
     const container = this.scene.add.container(x, y);
-    container.setScrollFactor(0);
-    container.setDepth(10000); // UI always on top
+    this.uiLayer.add(container);
     
     const bg = this.scene.add.graphics();
     bg.fillStyle(THEME.UI_BG_HEX, 0.6);
-    bg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
-    bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
-    bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
+    bg.lineStyle(isDesktop ? 2 : 3, THEME.UI_BORDER_HEX, 1);
+    bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
+    bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
 
     const txt = this.scene.add.text(0, 0, text, {
-      fontSize: '18px',
+      fontSize: fontSize,
       color: THEME.UI_TEXT,
       fontFamily: THEME.FONT,
     } as any).setOrigin(0.5);
@@ -50,29 +61,29 @@ export class UIManager extends Phaser.Events.EventEmitter {
       this.emit(eventName);
       bg.clear();
       bg.fillStyle(THEME.UI_ACCENT_HEX, 0.4);
-      bg.lineStyle(3, THEME.UI_ACCENT_HEX, 1);
-      bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
-      bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
+      bg.lineStyle(isDesktop ? 3 : 4, THEME.UI_ACCENT_HEX, 1);
+      bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
+      bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
       this.scene.time.delayedCall(100, () => {
         bg.clear();
         bg.fillStyle(THEME.UI_BG_HEX, 0.6);
-        bg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
-        bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
-        bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
+        bg.lineStyle(isDesktop ? 2 : 3, THEME.UI_BORDER_HEX, 1);
+        bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
+        bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
       });
     });
 
     container.on('pointerover', () => {
-      bg.lineStyle(4, THEME.UI_ACCENT_HEX, 1);
-      bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
+      bg.lineStyle(isDesktop ? 4 : 5, THEME.UI_ACCENT_HEX, 1);
+      bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
     });
 
     container.on('pointerout', () => {
       bg.clear();
       bg.fillStyle(THEME.UI_BG_HEX, 0.6);
-      bg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
-      bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
-      bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, 12);
+      bg.lineStyle(isDesktop ? 2 : 3, THEME.UI_BORDER_HEX, 1);
+      bg.fillRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
+      bg.strokeRoundedRect(-btnW/2, -btnH/2, btnW, btnH, borderRadius);
     });
 
     return container;
@@ -80,57 +91,62 @@ export class UIManager extends Phaser.Events.EventEmitter {
 
   private createUI() {
     const { width, height } = this.scene.scale;
+    const isDesktop = this.scene.sys.game.device.os.desktop;
     const textStyle: any = { 
-      fontSize: '24px', 
+      fontSize: '48px', // Увеличено в 2 раза (было 24px)
       color: THEME.UI_TEXT,
       fontFamily: THEME.FONT
     };
 
     // Top Left UI
-    this.moneyText = this.scene.add.text(20, 20, 'Money: $100', textStyle).setScrollFactor(0).setDepth(10000);
+    this.moneyText = this.scene.add.text(20, 20, 'Money: $100', textStyle).setOrigin(0);
     
     // Top Right UI
-    this.lifeText = this.scene.add.text(width - 20, 20, 'Bow HP: 100%', textStyle).setScrollFactor(0).setDepth(10000).setOrigin(1, 0);
-    this.waveText = this.scene.add.text(width - 20, 60, 'Wave: 1', textStyle).setScrollFactor(0).setDepth(10000).setOrigin(1, 0);
-    this.enemiesText = this.scene.add.text(width - 20, 100, 'Enemies: 0/0', { ...textStyle, fontSize: '18px' }).setScrollFactor(0).setDepth(10000).setOrigin(1, 0);
+    this.lifeText = this.scene.add.text(width - 20, 20, 'Bow HP: 100%', textStyle).setOrigin(1, 0);
+    this.waveText = this.scene.add.text(width - 20, 80, 'Wave: 1', textStyle).setOrigin(1, 0); // Сдвинул ниже из-за размера
+    this.enemiesText = this.scene.add.text(width - 20, 140, 'Enemies: 0/0', { ...textStyle, fontSize: '36px' }).setOrigin(1, 0); // Сдвинул ниже
+
+    this.uiLayer.add([this.moneyText, this.lifeText, this.waveText, this.enemiesText]);
 
     // Bottom Left UI - Tower Shop
-    const shopY = height - 100;
-    const shopXStart = 60; // Moved from 80 to 60 to be more to the left
+    const shopY = isDesktop ? height - 80 : height - 500;
+    const shopXStart = isDesktop ? 60 : 80;
+    const itemSpacing = isDesktop ? 90 : 130;
+    const bgSize = isDesktop ? 80 : 110;
+    const iconScale = isDesktop ? 0.7 : 1.0;
+    const fontSizeShop = isDesktop ? '11px' : '14px';
 
     const shopBg = this.scene.add.graphics();
-    shopBg.setScrollFactor(0);
-    shopBg.setDepth(9999);
+    this.uiLayer.add(shopBg);
     shopBg.fillStyle(THEME.UI_BG_HEX, 0.6);
-    shopBg.lineStyle(2, THEME.UI_BORDER_HEX, 1);
-    shopBg.fillRoundedRect(shopXStart - 60, shopY - 55, (CONSTANTS.TOWERS.length * 100) + 20, 110, 15);
-    shopBg.strokeRoundedRect(shopXStart - 60, shopY - 55, (CONSTANTS.TOWERS.length * 100) + 20, 110, 15);
+    shopBg.lineStyle(isDesktop ? 2 : 3, THEME.UI_BORDER_HEX, 1);
+    shopBg.fillRoundedRect(shopXStart - (bgSize/2 + 10), shopY - (bgSize/2 + 10), (CONSTANTS.TOWERS.length * itemSpacing) + 20, bgSize + 20, 15);
+    shopBg.strokeRoundedRect(shopXStart - (bgSize/2 + 10), shopY - (bgSize/2 + 10), (CONSTANTS.TOWERS.length * itemSpacing) + 20, bgSize + 20, 15);
 
     CONSTANTS.TOWERS.forEach((tower, index) => {
-      const container = this.scene.add.container(shopXStart + index * 100, shopY);
-      container.setScrollFactor(0);
-      container.setDepth(10000);
+      const container = this.scene.add.container(shopXStart + index * itemSpacing, shopY);
+      this.uiLayer.add(container);
       
       const bg = this.scene.add.graphics();
       bg.fillStyle(0x000000, 0.4);
-      bg.fillRoundedRect(-45, -45, 90, 90, 10);
-      bg.lineStyle(2, THEME.UI_BORDER_HEX, 0.5);
-      bg.strokeRoundedRect(-45, -45, 90, 90, 10);
+      bg.fillRoundedRect(-bgSize/2, -bgSize/2, bgSize, bgSize, 10);
+      bg.lineStyle(isDesktop ? 2 : 3, THEME.UI_BORDER_HEX, 0.5);
+      bg.strokeRoundedRect(-bgSize/2, -bgSize/2, bgSize, bgSize, 10);
       
-      const icon = this.scene.add.image(0, -10, tower.key).setScale(0.8);
-      const nameText = this.scene.add.text(0, 20, tower.name, { 
-        fontSize: '12px', 
+      const icon = this.scene.add.image(0, isDesktop ? -8 : -10, tower.key).setScale(iconScale);
+      const nameText = this.scene.add.text(0, isDesktop ? 18 : 22, tower.name, { 
+        fontSize: fontSizeShop, 
         color: THEME.UI_TEXT,
         fontFamily: THEME.FONT 
       } as any).setOrigin(0.5);
-      const costText = this.scene.add.text(0, 35, `$${tower.cost}`, { 
-        fontSize: '12px', 
+      const costText = this.scene.add.text(0, isDesktop ? 30 : 40, `$${tower.cost}`, { 
+        fontSize: fontSizeShop, 
         color: THEME.UI_ACCENT,
         fontFamily: THEME.FONT 
       } as any).setOrigin(0.5);
 
       container.add([bg, icon, nameText, costText]);
-      container.setInteractive(new Phaser.Geom.Rectangle(-45, -45, 90, 90), Phaser.Geom.Rectangle.Contains);
+      container.setInteractive(new Phaser.Geom.Rectangle(-bgSize/2, -bgSize/2, bgSize, bgSize), Phaser.Geom.Rectangle.Contains);
 
       container.on('pointerup', (pointer: Phaser.Input.Pointer) => {
         pointer.event.preventDefault();
@@ -141,46 +157,79 @@ export class UIManager extends Phaser.Events.EventEmitter {
     });
 
     // Start and Wave Buttons (Bottom Right)
-    const btnStartX = width - 200;
-    const btnWaveX = width - 80;
-    const btnY = height - 100;
+    const btnStartX = isDesktop ? width - 180 : width - 280;
+    const btnWaveX = isDesktop ? width - 70 : width - 110;
+    const btnY = isDesktop ? height - 80 : height - 500;
 
     this.createButton(btnStartX, btnY, 'START', 'startWave', true);
     this.createButton(btnWaveX, btnY, 'WAVE', 'nextWave', false);
+
+    this.updateShopAvailability();
   }
 
   private selectTower(tower: any, container: Phaser.GameObjects.Container) {
+    if (this.currentMoney < tower.cost) {
+      // Don't allow selecting expensive towers
+      return;
+    }
+    const isDesktop = this.scene.sys.game.device.os.desktop;
+    const bgSize = isDesktop ? 80 : 110;
+
     this.selectedTower = tower;
     this.towerButtons.forEach(btn => {
       const bg = btn.list[0] as Phaser.GameObjects.Graphics;
       bg.clear();
       bg.fillStyle(0x000000, 0.4);
-      bg.fillRoundedRect(-45, -45, 90, 90, 10);
-      bg.lineStyle(2, THEME.UI_BORDER_HEX, 0.5);
-      bg.strokeRoundedRect(-45, -45, 90, 90, 10);
+      bg.fillRoundedRect(-bgSize/2, -bgSize/2, bgSize, bgSize, 10);
+      bg.lineStyle(isDesktop ? 2 : 3, THEME.UI_BORDER_HEX, 0.5);
+      bg.strokeRoundedRect(-bgSize/2, -bgSize/2, bgSize, bgSize, 10);
     });
 
     const selectedBg = container.list[0] as Phaser.GameObjects.Graphics;
-    selectedBg.lineStyle(4, THEME.UI_ACCENT_HEX, 1);
-    selectedBg.strokeRoundedRect(-45, -45, 90, 90, 10);
+    selectedBg.lineStyle(isDesktop ? 4 : 5, THEME.UI_ACCENT_HEX, 1);
+    selectedBg.strokeRoundedRect(-bgSize/2, -bgSize/2, bgSize, bgSize, 10);
     
     this.emit('towerSelected', tower);
   }
 
   public deselectTower() {
     this.selectedTower = null;
+    const isDesktop = this.scene.sys.game.device.os.desktop;
+    const bgSize = isDesktop ? 80 : 110;
+
     this.towerButtons.forEach(btn => {
       const bg = btn.list[0] as Phaser.GameObjects.Graphics;
       bg.clear();
       bg.fillStyle(0x000000, 0.4);
-      bg.fillRoundedRect(-45, -45, 90, 90, 10);
-      bg.lineStyle(2, THEME.UI_BORDER_HEX, 0.5);
-      bg.strokeRoundedRect(-45, -45, 90, 90, 10);
+      bg.fillRoundedRect(-bgSize/2, -bgSize/2, bgSize, bgSize, 10);
+      bg.lineStyle(isDesktop ? 2 : 3, THEME.UI_BORDER_HEX, 0.5);
+      bg.strokeRoundedRect(-bgSize/2, -bgSize/2, bgSize, bgSize, 10);
     });
   }
 
   updateMoney(money: number) {
+    this.currentMoney = money;
     this.moneyText.setText(`Money: $${money}`);
+    this.updateShopAvailability();
+  }
+
+  private updateShopAvailability() {
+    this.towerButtons.forEach((btn, index) => {
+      const tower = CONSTANTS.TOWERS[index];
+      const icon = btn.list[1] as Phaser.GameObjects.Image;
+      const nameText = btn.list[2] as Phaser.GameObjects.Text;
+      const costText = btn.list[3] as Phaser.GameObjects.Text;
+      
+      if (this.currentMoney < tower.cost) {
+        icon.setAlpha(0.3).setTint(0x555555);
+        nameText.setAlpha(0.3);
+        costText.setAlpha(0.3).setColor('#ff0000');
+      } else {
+        icon.setAlpha(1).clearTint();
+        nameText.setAlpha(1);
+        costText.setAlpha(1).setColor(THEME.UI_ACCENT);
+      }
+    });
   }
 
   updateWave(wave: number) {

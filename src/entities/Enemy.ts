@@ -9,9 +9,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   public path: Phaser.Math.Vector2[] = [];
   public healthBar: Phaser.GameObjects.Graphics;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, key: string, config: any, path: Phaser.Math.Vector2[]) {
+  constructor(scene: Phaser.Scene, x: number, y: number, key: string, config: any, path: Phaser.Math.Vector2[], worldLayer?: Phaser.GameObjects.Container) {
     super(scene, x, y, key);
-    scene.add.existing(this);
+    if (worldLayer) {
+      worldLayer.add(this);
+    } else {
+      scene.add.existing(this);
+    }
     scene.physics.add.existing(this);
 
     this.hp = config.hp;
@@ -20,6 +24,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.reward = config.reward;
     this.path = path;
     this.healthBar = scene.add.graphics();
+    if (worldLayer) worldLayer.add(this.healthBar);
     this.setOrigin(0.5, 0.8);
     this.setScale(1.0);
   }
