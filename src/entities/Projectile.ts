@@ -1,8 +1,6 @@
 import Phaser from 'phaser';
 import { Enemy } from './Enemy';
 
-import { THEME } from '../utils/ThemeConfig';
-
 export class Projectile extends Phaser.Physics.Arcade.Sprite {
   public damage: number;
   public target: Enemy;
