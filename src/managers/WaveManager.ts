@@ -65,7 +65,6 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     
     // Check for win condition: last wave and all enemies are gone
     if (this.currentWave === 10 && this.enemiesSpawned === this.enemiesInWave && this.enemiesActive <= 0) {
-      console.log('WaveManager: Victory condition met! Emitting allWavesComplete');
       this.emit('allWavesComplete');
     }
   }

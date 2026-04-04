@@ -459,7 +459,6 @@ export class Game extends Phaser.Scene {
     });
 
     this.waveManager.on('allWavesComplete', () => {
-      console.log('GameScene: Victory event received!');
       this.gameWin();
     });
 
@@ -579,7 +578,6 @@ export class Game extends Phaser.Scene {
     // Safety check for win condition (if event was missed)
     if (!this.isGameOver && this.waveManager.getCurrentWave() === 10 && 
         this.waveManager.isWaveComplete() && this.enemies.getLength() === 0) {
-      console.log('Game: Safety win condition met!');
       this.gameWin();
     }
   }
