@@ -459,6 +459,7 @@ export class Game extends Phaser.Scene {
     });
 
     this.waveManager.on('allWavesComplete', () => {
+      console.log('GameScene: Victory event received!');
       this.gameWin();
     });
 
@@ -480,8 +481,13 @@ export class Game extends Phaser.Scene {
 
     this.uiManager.on('nextWave', () => {
       // WAVE button: always starts the next wave
-      this.waveManager.startNextWave();
-      this.uiManager.setStartButtonToRestart();
+      if (this.waveManager.getCurrentWave() < 10) {
+        this.waveManager.startNextWave();
+        this.uiManager.setStartButtonToRestart();
+        if (this.waveManager.getCurrentWave() === 10) {
+          this.uiManager.disableWaveButton();
+        }
+      }
     });
   }
 
@@ -569,27 +575,35 @@ export class Game extends Phaser.Scene {
       tower.update(time, this.enemies.getChildren() as Enemy[], this.projectiles);
     });
     this.projectiles.getChildren().forEach((projectile: any) => projectile.update());
+
+    // Safety check for win condition (if event was missed)
+    if (!this.isGameOver && this.waveManager.getCurrentWave() === 10 && 
+        this.waveManager.isWaveComplete() && this.enemies.getLength() === 0) {
+      console.log('Game: Safety win condition met!');
+      this.gameWin();
+    }
   }
 
   private gameWin() {
+    if (this.isGameOver) return;
     this.isGameOver = true;
     const { width, height } = this.scale;
     
     // Create overlay first
-    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setDepth(2000);
-    this.add.text(width / 2, height / 2, 'YOU WIN!', { 
+    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setDepth(200000);
+    const winText = this.add.text(width / 2, height / 2, 'YOU WIN!', { 
       fontSize: '64px', 
       color: '#0f0',
       fontFamily: THEME.FONT
-    } as any).setOrigin(0.5).setDepth(2001);
+    } as any).setOrigin(0.5).setDepth(200001);
 
-    this.add.text(width / 2, height / 2 + 80, 'Заново', { 
+    const restartBtn = this.add.text(width / 2, height / 2 + 80, 'Заново', { 
       fontSize: '32px', 
       color: '#fff',
       backgroundColor: THEME.UI_BG,
       padding: { x: 20, y: 10 },
       fontFamily: THEME.FONT
-    } as any).setOrigin(0.5).setDepth(2001)
+    } as any).setOrigin(0.5).setDepth(200001)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         this.scene.start('Game');
@@ -600,32 +614,31 @@ export class Game extends Phaser.Scene {
     this.time.removeAllEvents();
     
     // Fix UI in game over/win
-    this.children.each((child: any) => {
-      if (child.type === 'Text' || child.type === 'Rectangle') {
-        child.setScrollFactor(0);
-      }
-    });
+    overlay.setScrollFactor(0);
+    winText.setScrollFactor(0);
+    restartBtn.setScrollFactor(0);
   }
 
   private gameOver() {
+    if (this.isGameOver) return;
     this.isGameOver = true;
     const { width, height } = this.scale;
     
     // Create overlay first
-    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setDepth(2000);
-    this.add.text(width / 2, height / 2, 'GAME OVER', { 
+    const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setDepth(200000);
+    const loseText = this.add.text(width / 2, height / 2, 'GAME OVER', { 
       fontSize: '64px', 
       color: '#f00',
       fontFamily: THEME.FONT
-    } as any).setOrigin(0.5).setDepth(2001);
+    } as any).setOrigin(0.5).setDepth(200001);
 
-    this.add.text(width / 2, height / 2 + 80, 'Заново', { 
+    const restartBtn = this.add.text(width / 2, height / 2 + 80, 'Заново', { 
       fontSize: '32px', 
       color: '#fff',
       backgroundColor: THEME.UI_BG,
       padding: { x: 20, y: 10 },
       fontFamily: THEME.FONT
-    } as any).setOrigin(0.5).setDepth(2001)
+    } as any).setOrigin(0.5).setDepth(200001)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         this.scene.start('Game');
@@ -634,5 +647,9 @@ export class Game extends Phaser.Scene {
     // Pause physics and events
     this.physics.pause();
     this.time.removeAllEvents();
+
+    overlay.setScrollFactor(0);
+    loseText.setScrollFactor(0);
+    restartBtn.setScrollFactor(0);
   }
 }

@@ -7,6 +7,7 @@ export class WaveManager extends Phaser.Events.EventEmitter {
   private currentWave: number = 0;
   private enemiesInWave: number = 0;
   private enemiesSpawned: number = 0;
+  private enemiesActive: number = 0;
   private path: Phaser.Math.Vector2[];
   private worldLayer?: Phaser.GameObjects.Container;
 
@@ -19,16 +20,16 @@ export class WaveManager extends Phaser.Events.EventEmitter {
 
   startNextWave() {
     if (this.currentWave >= 10) {
-      this.emit('allWavesComplete');
       return;
     }
     this.currentWave++;
     this.enemiesInWave = this.currentWave * 5;
     this.enemiesSpawned = 0;
+    // Removed reset of enemiesActive to keep track of enemies from previous waves
     this.emit('waveStart', this.currentWave);
 
     this.scene.time.addEvent({
-      delay: 2000, // Increased from 1000 to 2000 for slower spawn
+      delay: 2000,
       callback: this.spawnEnemy,
       callbackScope: this,
       repeat: this.enemiesInWave - 1,
@@ -41,12 +42,15 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     if (!startPoint) return;
     
     const enemy = new Enemy(this.scene, startPoint.x, startPoint.y, enemyConfig.key, enemyConfig, this.path, this.worldLayer);
+    this.enemiesActive++;
     
     enemy.on('reachedEnd', () => {
+      this.enemiesActive--;
       this.emit('enemyReachedEnd');
       this.checkWaveProgress();
     });
     enemy.on('killed', (reward: number) => {
+      this.enemiesActive--;
       this.emit('enemyKilled', reward);
       this.checkWaveProgress();
     });
@@ -57,9 +61,13 @@ export class WaveManager extends Phaser.Events.EventEmitter {
   }
 
   private checkWaveProgress() {
-    // Wave is fully finished when all enemies are spawned AND all are either killed or reached end
-    // But for UI we might just want to count active ones
     this.emit('waveProgress', this.enemiesSpawned, this.enemiesInWave);
+    
+    // Check for win condition: last wave and all enemies are gone
+    if (this.currentWave === 10 && this.enemiesSpawned === this.enemiesInWave && this.enemiesActive <= 0) {
+      console.log('WaveManager: Victory condition met! Emitting allWavesComplete');
+      this.emit('allWavesComplete');
+    }
   }
 
   isWaveComplete() {

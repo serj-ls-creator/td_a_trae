@@ -308,4 +308,18 @@ export class UIManager extends Phaser.Events.EventEmitter {
       this.startButtonText.setText('ЗАНОВО');
     }
   }
+
+  public disableWaveButton() {
+    // We can't easily find the WAVE button by variable, so we find it by text in the uiLayer
+    this.uiLayer.iterate((child: any) => {
+      if (child instanceof Phaser.GameObjects.Container) {
+        child.iterate((subChild: any) => {
+          if (subChild instanceof Phaser.GameObjects.Text && subChild.text === 'WAVE') {
+            child.disableInteractive();
+            child.setAlpha(0.5);
+          }
+        });
+      }
+    });
+  }
 }
