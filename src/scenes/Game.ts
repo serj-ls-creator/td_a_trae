@@ -32,7 +32,6 @@ export class Game extends Phaser.Scene {
   private grid: { [key: string]: GridCell } = {};
   private tileGroup!: Phaser.GameObjects.Group;
   private worldLayer!: Phaser.GameObjects.Container;
-  private decorationLayer!: Phaser.GameObjects.Container;
   private offsetX: number = 0;
   private offsetY: number = 0;
 
@@ -56,8 +55,6 @@ export class Game extends Phaser.Scene {
 
     // Инициализируем группы ДО создания карты
     this.worldLayer = this.add.container(0, 0);
-    this.decorationLayer = this.add.container(0, 0);
-    this.decorationLayer.setDepth(20000); // Super high depth, above enemies
     
     this.enemies = this.add.group({ classType: Enemy });
     this.towers = this.add.group({ classType: Tower });
@@ -82,7 +79,6 @@ export class Game extends Phaser.Scene {
     
     // UI camera should ignore the world containers and groups
     this.uiCamera.ignore(this.worldLayer);
-    this.uiCamera.ignore(this.decorationLayer);
     this.uiCamera.ignore(this.enemies);
     this.uiCamera.ignore(this.towers);
     this.uiCamera.ignore(this.projectiles);
@@ -283,7 +279,7 @@ export class Game extends Phaser.Scene {
 
   private createHouse(x: number, y: number) {
     const container = this.add.container(x, y);
-    this.decorationLayer.add(container);
+    this.worldLayer.add(container);
     const g = this.add.graphics();
     const color = Phaser.Utils.Array.GetRandom(THEME.BUILDING_COLORS) as number;
 
@@ -340,12 +336,12 @@ export class Game extends Phaser.Scene {
     g.fillRect(16, -20, 8, 8);
 
     container.add(g);
-    // Depth is handled by decorationLayer
+    container.setDepth(y);
   }
 
   private createTree(x: number, y: number) {
     const container = this.add.container(x, y);
-    this.decorationLayer.add(container);
+    this.worldLayer.add(container);
     const g = this.add.graphics();
 
     // Trunk
@@ -358,7 +354,7 @@ export class Game extends Phaser.Scene {
     g.fillCircle(0, ly, 25);
 
     container.add(g);
-    // Depth is handled by decorationLayer
+    container.setDepth(y);
   }
 
   private createDeathEffect(x: number, y: number) {
@@ -585,6 +581,10 @@ export class Game extends Phaser.Scene {
       tower.update(time, this.enemies.getChildren() as Enemy[], this.projectiles);
     });
     this.projectiles.getChildren().forEach((projectile: any) => projectile.update());
+
+    // Глобальная сортировка слоя мира по глубине, чтобы ближние объекты
+    // (с большим y) всегда рисовались поверх дальних.
+    this.worldLayer.sort('depth');
 
     // Safety check for win condition (if event was missed)
     if (!this.isGameOver && this.waveManager.getCurrentWave() === 10 && 

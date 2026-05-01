@@ -15,6 +15,7 @@ export class Tower extends Phaser.GameObjects.Sprite {
   public target: Enemy | null = null;
   public rangeGraphic: Phaser.GameObjects.Graphics;
   public healthBar: Phaser.GameObjects.Graphics;
+  private hasTakenDamage: boolean = false;
   private worldLayer?: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene, x: number, y: number, key: string, config: any, worldLayer?: Phaser.GameObjects.Container) {
@@ -42,6 +43,7 @@ export class Tower extends Phaser.GameObjects.Sprite {
     this.rangeGraphic.setDepth(2000); // Higher depth to be visible above everything
     this.healthBar = scene.add.graphics();
     if (worldLayer) worldLayer.add(this.healthBar);
+    this.healthBar.setVisible(false);
     this.drawHealthBar();
 
     this.setInteractive();
@@ -108,6 +110,8 @@ export class Tower extends Phaser.GameObjects.Sprite {
   takeDamagePercent(percent: number) {
     const damage = this.maxHp * percent;
     this.hp = Math.max(0, this.hp - damage);
+    this.hasTakenDamage = true;
+    this.healthBar.setVisible(true);
     this.drawHealthBar();
 
     this.setTint(0xff9999);
@@ -122,6 +126,10 @@ export class Tower extends Phaser.GameObjects.Sprite {
 
   private drawHealthBar() {
     if (!this.active) return;
+    if (!this.hasTakenDamage) {
+      this.healthBar.clear();
+      return;
+    }
 
     this.healthBar.clear();
     this.healthBar.fillStyle(0x000000, 0.55);

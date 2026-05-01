@@ -10,6 +10,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   public pathIndex: number = 0;
   public path: Phaser.Math.Vector2[] = [];
   public healthBar: Phaser.GameObjects.Graphics;
+  private hasTakenDamage: boolean = false;
   private bossVisual?: Phaser.GameObjects.Graphics;
   private nextBossAttackAt: number = 0;
   private readonly bossAttackCooldownMs: number = 2200;
@@ -32,8 +33,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.path = path;
     this.healthBar = scene.add.graphics();
     if (worldLayer) worldLayer.add(this.healthBar);
+    this.healthBar.setVisible(false);
     this.setOrigin(0.5, 0.8);
-    this.setScale(this.isBoss ? 1.45 : 1.0);
+    this.setScale(this.isBoss ? 1.45 : 0.78);
     if (this.isBoss) {
       this.setVisible(false);
       this.createBossVisual(worldLayer);
@@ -68,9 +70,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   drawHealthBar() {
-    const barWidth = this.isBoss ? 110 : 80;
-    const barOffsetX = this.isBoss ? 55 : 40;
-    const barY = this.isBoss ? this.y - 96 : this.y - 80;
+    if (!this.hasTakenDamage) {
+      this.healthBar.clear();
+      return;
+    }
+
+    const barWidth = this.isBoss ? 110 : 56;
+    const barOffsetX = this.isBoss ? 55 : 28;
+    const barY = this.isBoss ? this.y - 96 : this.y - 66;
 
     this.healthBar.clear();
     this.healthBar.setDepth(this.depth + 1);
@@ -82,6 +89,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   takeDamage(amount: number) {
     this.hp -= amount;
+    if (amount > 0) {
+      this.hasTakenDamage = true;
+      this.healthBar.setVisible(true);
+    }
     if (this.isBoss && amount > 0) {
       this.emit('bossHit', 1);
     }
