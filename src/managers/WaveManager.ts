@@ -8,6 +8,9 @@ export class WaveManager extends Phaser.Events.EventEmitter {
   private enemiesInWave: number = 0;
   private enemiesSpawned: number = 0;
   private enemiesActive: number = 0;
+  private waveCompleteEmitted: boolean = false;
+  private throwersTargetInWave: number = 0;
+  private throwersAssignedInWave: number = 0;
   private path: Phaser.Math.Vector2[];
   private worldLayer?: Phaser.GameObjects.Container;
 
@@ -26,6 +29,9 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     // Базовые + "смешные": с каждой новой волной +1 такой монстр.
     this.enemiesInWave = this.getBaseEnemiesInWave() + this.getFunnyEnemiesInWave();
     this.enemiesSpawned = 0;
+    this.waveCompleteEmitted = false;
+    this.throwersAssignedInWave = 0;
+    this.throwersTargetInWave = Math.round(this.enemiesInWave * this.getThrowerRatioForWave());
     // Removed reset of enemiesActive to keep track of enemies from previous waves
     this.emit('waveStart', this.currentWave);
 
@@ -45,13 +51,13 @@ export class WaveManager extends Phaser.Events.EventEmitter {
       hp: Math.max(1, Math.round(baseEnemyConfig.hp * waveMultiplier))
     };
 
-    // С 5-й волны первый "смешной" монстр становится кидателем (10% урон башням).
-    if (this.currentWave >= 5 && this.isFirstFunnySpawn()) {
+    if (this.shouldMakeCurrentEnemyThrower()) {
       enemyConfig = {
         ...enemyConfig,
         name: `${enemyConfig.name} Thrower`,
         isThrower: true
       };
+      this.throwersAssignedInWave++;
     }
     const startPoint = this.path[0];
     if (!startPoint) return;
@@ -119,6 +125,11 @@ export class WaveManager extends Phaser.Events.EventEmitter {
 
   private checkWaveProgress() {
     this.emit('waveProgress', this.enemiesSpawned, this.enemiesInWave);
+
+    if (!this.waveCompleteEmitted && this.enemiesSpawned === this.enemiesInWave && this.enemiesActive <= 0) {
+      this.waveCompleteEmitted = true;
+      this.emit('waveComplete', this.currentWave);
+    }
     
     // Check for win condition: last wave and all enemies are gone
     if (this.currentWave === 10 && this.enemiesSpawned === this.enemiesInWave && this.enemiesActive <= 0) {
@@ -150,10 +161,6 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     return spawnIndex >= this.getBaseEnemiesInWave();
   }
 
-  private isFirstFunnySpawn() {
-    return this.enemiesSpawned === this.getBaseEnemiesInWave();
-  }
-
   private getEnemyConfigForCurrentSpawn() {
     const spawnIndex = this.enemiesSpawned;
     if (!this.isFunnySpawn(spawnIndex)) {
@@ -163,5 +170,23 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     const funnyIndex = spawnIndex - this.getBaseEnemiesInWave();
     const funnyConfig = CONSTANTS.FUNNY_ENEMIES[funnyIndex % CONSTANTS.FUNNY_ENEMIES.length];
     return funnyConfig ?? CONSTANTS.ENEMIES[0];
+  }
+
+  private getThrowerRatioForWave() {
+    if (this.currentWave <= 5) return 0;
+    // С 6 по 10 волну: 6%, 12%, 18%, 24%, 30%.
+    return Math.min(0.3, (this.currentWave - 5) * 0.06);
+  }
+
+  private shouldMakeCurrentEnemyThrower() {
+    if (this.throwersAssignedInWave >= this.throwersTargetInWave) return false;
+
+    const remainingSpawns = this.enemiesInWave - this.enemiesSpawned;
+    const remainingThrowers = this.throwersTargetInWave - this.throwersAssignedInWave;
+    if (remainingSpawns <= 0 || remainingThrowers <= 0) return false;
+
+    // Гарантированное распределение: к концу волны точно получаем целевой процент.
+    const chance = remainingThrowers / remainingSpawns;
+    return Math.random() < chance;
   }
 }

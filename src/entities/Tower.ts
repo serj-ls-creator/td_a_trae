@@ -120,6 +120,7 @@ export class Tower extends Phaser.GameObjects.Sprite {
     });
 
     if (this.hp <= 0) {
+      this.emit('destroyedByEnemy', this.config.key);
       this.destroy();
     }
   }

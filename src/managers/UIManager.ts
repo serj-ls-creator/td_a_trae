@@ -11,12 +11,21 @@ export class UIManager extends Phaser.Events.EventEmitter {
   private towerButtons: Phaser.GameObjects.Container[] = [];
   public selectedTower: any = null;
   private startButtonText!: Phaser.GameObjects.Text;
+  private pauseButtonText!: Phaser.GameObjects.Text;
   private uiLayer: Phaser.GameObjects.Container;
   private currentMoney: number = 100;
+  private towerCosts: Record<string, number> = {};
+  private towerPriceLadders: Record<string, number[]> = {};
+  private towerPriceLevelIndex: Record<string, number> = {};
 
   constructor(scene: Phaser.Scene) {
     super();
     this.scene = scene;
+    CONSTANTS.TOWERS.forEach((tower) => {
+      this.towerCosts[tower.key] = tower.cost;
+      this.towerPriceLadders[tower.key] = [tower.cost];
+      this.towerPriceLevelIndex[tower.key] = 0;
+    });
     this.uiLayer = this.scene.add.container(0, 0);
     this.uiLayer.setScrollFactor(0);
     this.uiLayer.setDepth(10000);
@@ -27,7 +36,7 @@ export class UIManager extends Phaser.Events.EventEmitter {
     return this.uiLayer;
   }
 
-  private createButton(x: number, y: number, text: string, eventName: string, isStart: boolean) {
+  private createButton(x: number, y: number, text: string, eventName: string, isStart: boolean, isPause: boolean = false) {
     const isDesktop = this.scene.sys.game.device.os.desktop;
     const btnW = isDesktop ? 100 : 130;
     const btnH = isDesktop ? 40 : 65;
@@ -51,6 +60,9 @@ export class UIManager extends Phaser.Events.EventEmitter {
 
     if (isStart) {
       this.startButtonText = txt;
+    }
+    if (isPause) {
+      this.pauseButtonText = txt;
     }
 
     container.add([bg, txt]);
@@ -139,7 +151,7 @@ export class UIManager extends Phaser.Events.EventEmitter {
         color: THEME.UI_TEXT,
         fontFamily: THEME.FONT 
       } as any).setOrigin(0.5);
-      const costText = this.scene.add.text(0, isDesktop ? 30 : 40, `$${tower.cost}`, { 
+      const costText = this.scene.add.text(0, isDesktop ? 30 : 40, `$${this.getTowerCost(tower.key)}`, { 
         fontSize: fontSizeShop, 
         color: THEME.UI_ACCENT,
         fontFamily: THEME.FONT 
@@ -150,32 +162,35 @@ export class UIManager extends Phaser.Events.EventEmitter {
 
       container.on('pointerup', (pointer: Phaser.Input.Pointer) => {
         pointer.event.preventDefault();
-        this.selectTower(tower, container);
+        this.selectTower({ ...tower, cost: this.getTowerCost(tower.key) }, container);
       });
 
       this.towerButtons.push(container);
     });
 
     // Start and Wave Buttons (Bottom Right)
-    const btnStartX = isDesktop ? width - 180 : width - 280;
-    const btnWaveX = isDesktop ? width - 70 : width - 110;
+    const btnStartX = isDesktop ? width - 290 : width - 430;
+    const btnPauseX = isDesktop ? width - 180 : width - 280;
+    const btnWaveX = isDesktop ? width - 70 : width - 130;
     const btnY = isDesktop ? height - 80 : height - 500;
 
     this.createButton(btnStartX, btnY, 'START', 'startWave', true);
+    this.createButton(btnPauseX, btnY, 'PAUSE', 'togglePause', false, true);
     this.createButton(btnWaveX, btnY, 'WAVE', 'nextWave', false);
 
     this.updateShopAvailability();
   }
 
   private selectTower(tower: any, container: Phaser.GameObjects.Container) {
-    if (this.currentMoney < tower.cost) {
+    const currentCost = this.getTowerCost(tower.key);
+    if (this.currentMoney < currentCost) {
       // Don't allow selecting expensive towers
       return;
     }
     const isDesktop = this.scene.sys.game.device.os.desktop;
     const bgSize = isDesktop ? 80 : 110;
 
-    this.selectedTower = tower;
+    this.selectedTower = { ...tower, cost: currentCost };
     this.towerButtons.forEach(btn => {
       const bg = btn.list[0] as Phaser.GameObjects.Graphics;
       bg.clear();
@@ -277,8 +292,10 @@ export class UIManager extends Phaser.Events.EventEmitter {
       const icon = btn.list[1] as Phaser.GameObjects.Image;
       const nameText = btn.list[2] as Phaser.GameObjects.Text;
       const costText = btn.list[3] as Phaser.GameObjects.Text;
+      const currentCost = this.getTowerCost(tower.key);
+      costText.setText(`$${currentCost}`);
       
-      if (this.currentMoney < tower.cost) {
+      if (this.currentMoney < currentCost) {
         icon.setAlpha(0.3).setTint(0x555555);
         nameText.setAlpha(0.3);
         costText.setAlpha(0.3).setColor('#ff0000');
@@ -288,6 +305,72 @@ export class UIManager extends Phaser.Events.EventEmitter {
         costText.setAlpha(1).setColor(THEME.UI_ACCENT);
       }
     });
+  }
+
+  public setTowerCost(towerKey: string, cost: number) {
+    this.towerCosts[towerKey] = Math.max(1, Math.round(cost));
+    const ladder = this.towerPriceLadders[towerKey];
+    if (ladder && ladder.length > 0) {
+      let closestIndex = 0;
+      let closestDiff = Math.abs(ladder[0] - this.towerCosts[towerKey]);
+      for (let i = 1; i < ladder.length; i++) {
+        const diff = Math.abs(ladder[i] - this.towerCosts[towerKey]);
+        if (diff < closestDiff) {
+          closestDiff = diff;
+          closestIndex = i;
+        }
+      }
+      this.towerPriceLevelIndex[towerKey] = closestIndex;
+      this.towerCosts[towerKey] = ladder[closestIndex];
+    }
+    if (this.selectedTower?.key === towerKey) {
+      this.selectedTower.cost = this.getTowerCost(towerKey);
+    }
+    this.updateShopAvailability();
+  }
+
+  public getTowerCost(towerKey: string) {
+    return this.towerCosts[towerKey] ?? (CONSTANTS.TOWERS.find((tower) => tower.key === towerKey)?.cost ?? 0);
+  }
+
+  public setTowerPriceLadders(ladders: Record<string, number[]>) {
+    Object.entries(ladders).forEach(([towerKey, ladder]) => {
+      if (!ladder || ladder.length === 0) return;
+      const normalized = ladder.map((value) => Math.max(1, Math.round(value)));
+      this.towerPriceLadders[towerKey] = normalized;
+      this.towerPriceLevelIndex[towerKey] = 0;
+      this.towerCosts[towerKey] = normalized[0];
+    });
+    if (this.selectedTower) {
+      this.selectedTower.cost = this.getTowerCost(this.selectedTower.key);
+    }
+    this.updateShopAvailability();
+  }
+
+  public increaseTowerPrice(towerKey: string) {
+    const ladder = this.towerPriceLadders[towerKey];
+    if (!ladder || ladder.length === 0) return;
+    const currentIndex = this.towerPriceLevelIndex[towerKey] ?? 0;
+    const nextIndex = Math.min(ladder.length - 1, currentIndex + 1);
+    this.towerPriceLevelIndex[towerKey] = nextIndex;
+    this.towerCosts[towerKey] = ladder[nextIndex];
+    if (this.selectedTower?.key === towerKey) {
+      this.selectedTower.cost = this.towerCosts[towerKey];
+    }
+    this.updateShopAvailability();
+  }
+
+  public decreaseTowerPrice(towerKey: string) {
+    const ladder = this.towerPriceLadders[towerKey];
+    if (!ladder || ladder.length === 0) return;
+    const currentIndex = this.towerPriceLevelIndex[towerKey] ?? 0;
+    const prevIndex = Math.max(0, currentIndex - 1);
+    this.towerPriceLevelIndex[towerKey] = prevIndex;
+    this.towerCosts[towerKey] = ladder[prevIndex];
+    if (this.selectedTower?.key === towerKey) {
+      this.selectedTower.cost = this.towerCosts[towerKey];
+    }
+    this.updateShopAvailability();
   }
 
   updateWave(wave: number) {
@@ -306,6 +389,12 @@ export class UIManager extends Phaser.Events.EventEmitter {
   public setStartButtonToRestart() {
     if (this.startButtonText) {
       this.startButtonText.setText('ЗАНОВО');
+    }
+  }
+
+  public setPauseButtonState(paused: boolean) {
+    if (this.pauseButtonText) {
+      this.pauseButtonText.setText(paused ? 'RESUME' : 'PAUSE');
     }
   }
 

@@ -25,9 +25,9 @@ export const CONSTANTS = {
   TILE_HEIGHT: 64,
   MAP_SIZE: 12,
   TOWERS: [
-    { name: 'Flower', cost: 25, damage: 10, range: 100, fireRate: 1000, key: 'flower' },
-    { name: 'Monkey', cost: 50, damage: 20, range: 132, fireRate: 1500, key: 'monkey' },
-    { name: 'Ghost', cost: 75, damage: 30, range: 166, fireRate: 2000, key: 'ghost' },
+    { name: 'Flower', cost: 20, damage: 10, range: 100, fireRate: 1000, key: 'flower' },
+    { name: 'Monkey', cost: 40, damage: 20, range: 132, fireRate: 1500, key: 'monkey' },
+    { name: 'Ghost', cost: 70, damage: 30, range: 166, fireRate: 2000, key: 'ghost' },
     { name: 'Fan', cost: 100, damage: 40, range: 200, fireRate: 2500, key: 'fan' }
   ] as TowerConfig[],
   ENEMIES: [

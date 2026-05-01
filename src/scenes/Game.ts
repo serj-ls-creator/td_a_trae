@@ -34,6 +34,8 @@ export class Game extends Phaser.Scene {
   private worldLayer!: Phaser.GameObjects.Container;
   private offsetX: number = 0;
   private offsetY: number = 0;
+  private autoWaveTimer: Phaser.Time.TimerEvent | null = null;
+  private isPaused: boolean = false;
 
   private isGameOver: boolean = false;
 
@@ -49,6 +51,7 @@ export class Game extends Phaser.Scene {
 
   create() {
     this.isGameOver = false;
+    this.isPaused = false;
     const isDesktop = this.sys.game.device.os.desktop;
     this.cameras.main.setBackgroundColor(THEME.BACKGROUND as any);
     this.cameras.main.setZoom(isDesktop ? 0.9 : 1.4); // Увеличенный зум для мобильных устройств
@@ -71,6 +74,13 @@ export class Game extends Phaser.Scene {
 
     this.waveManager = new WaveManager(this, this.path, this.worldLayer);
     this.uiManager = new UIManager(this);
+    this.uiManager.setPauseButtonState(false);
+    this.uiManager.setTowerPriceLadders({
+      flower: [20, 25, 30, 40, 55, 75, 100, 130, 180, 250],
+      monkey: [40, 50, 70, 100, 130, 160, 220, 250, 300, 360, 400],
+      ghost: [70, 80, 100, 130, 160, 220, 250, 300, 360, 400, 450, 500, 600, 750],
+      fan: [100, 130, 160, 220, 250, 300, 360, 400, 450, 500, 600, 750, 900, 1200]
+    });
 
     // Create a separate camera for UI with zoom 1
     this.uiCamera = this.cameras.add(0, 0, screenW, screenH, false, 'UI');
@@ -462,6 +472,22 @@ export class Game extends Phaser.Scene {
       this.gameWin();
     });
 
+    this.waveManager.on('waveComplete', () => {
+      if (this.isGameOver || this.isPaused) return;
+      if (this.waveManager.getCurrentWave() >= 10) return;
+      this.clearAutoWaveTimer();
+      this.autoWaveTimer = this.time.delayedCall(3000, () => {
+        if (this.isGameOver || this.isPaused) return;
+        if (this.waveManager.getCurrentWave() < 10) {
+          this.waveManager.startNextWave();
+          this.uiManager.setStartButtonToRestart();
+          if (this.waveManager.getCurrentWave() === 10) {
+            this.uiManager.disableWaveButton();
+          }
+        }
+      });
+    });
+
     this.uiManager.on('towerSelected', (tower: any) => {
       this.updateGhostTower(tower);
     });
@@ -474,6 +500,7 @@ export class Game extends Phaser.Scene {
         });
         return;
       }
+      this.clearAutoWaveTimer();
       this.waveManager.startNextWave();
       this.uiManager.setStartButtonToRestart();
     });
@@ -481,12 +508,18 @@ export class Game extends Phaser.Scene {
     this.uiManager.on('nextWave', () => {
       // WAVE button: always starts the next wave
       if (this.waveManager.getCurrentWave() < 10) {
+        this.clearAutoWaveTimer();
         this.waveManager.startNextWave();
         this.uiManager.setStartButtonToRestart();
         if (this.waveManager.getCurrentWave() === 10) {
           this.uiManager.disableWaveButton();
         }
       }
+    });
+
+    this.uiManager.on('togglePause', () => {
+      if (this.isGameOver) return;
+      this.setPaused(!this.isPaused);
     });
   }
 
@@ -522,13 +555,23 @@ export class Game extends Phaser.Scene {
       return;
     }
 
-    if (this.money >= towerConfig.cost) {
-      this.money -= towerConfig.cost;
+    const currentTowerCost = this.uiManager.getTowerCost(towerConfig.key);
+
+    if (this.money >= currentTowerCost) {
+      this.money -= currentTowerCost;
       this.uiManager.updateMoney(this.money);
 
-      const tower = new Tower(this, cell.x, cell.y, towerConfig.key, towerConfig, this.worldLayer);
+      const purchasedTowerConfig = { ...towerConfig, cost: currentTowerCost };
+      const tower = new Tower(this, cell.x, cell.y, towerConfig.key, purchasedTowerConfig, this.worldLayer);
       this.towers.add(tower);
       cell.isOccupied = true;
+
+      this.uiManager.increaseTowerPrice(towerConfig.key);
+
+      tower.on('destroyedByEnemy', (destroyedTowerKey: string) => {
+        this.uiManager.decreaseTowerPrice(destroyedTowerKey);
+      });
+
       tower.once(Phaser.GameObjects.Events.DESTROY, () => {
         const gridCell = this.grid[cellKey];
         if (gridCell) {
@@ -576,6 +619,10 @@ export class Game extends Phaser.Scene {
       }
     }
 
+    if (this.isPaused) {
+      return;
+    }
+
     this.enemies.getChildren().forEach((enemy: any) => enemy.update(this.towers.getChildren()));
     this.towers.getChildren().forEach((tower: any) => {
       tower.update(time, this.enemies.getChildren() as Enemy[], this.projectiles);
@@ -596,6 +643,7 @@ export class Game extends Phaser.Scene {
   private gameWin() {
     if (this.isGameOver) return;
     this.isGameOver = true;
+    this.clearAutoWaveTimer();
     const { width, height } = this.scale;
     
     // Create overlay first
@@ -631,6 +679,7 @@ export class Game extends Phaser.Scene {
   private gameOver() {
     if (this.isGameOver) return;
     this.isGameOver = true;
+    this.clearAutoWaveTimer();
     const { width, height } = this.scale;
     
     // Create overlay first
@@ -660,5 +709,25 @@ export class Game extends Phaser.Scene {
     overlay.setScrollFactor(0);
     loseText.setScrollFactor(0);
     restartBtn.setScrollFactor(0);
+  }
+
+  private clearAutoWaveTimer() {
+    if (this.autoWaveTimer) {
+      this.autoWaveTimer.remove(false);
+      this.autoWaveTimer = null;
+    }
+  }
+
+  private setPaused(paused: boolean) {
+    this.isPaused = paused;
+    this.physics.world.isPaused = paused;
+    if (paused) {
+      this.tweens.pauseAll();
+      this.time.timeScale = 0;
+    } else {
+      this.time.timeScale = 1;
+      this.tweens.resumeAll();
+    }
+    this.uiManager.setPauseButtonState(paused);
   }
 }
