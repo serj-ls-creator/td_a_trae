@@ -42,22 +42,62 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     if (!startPoint) return;
     
     const enemy = new Enemy(this.scene, startPoint.x, startPoint.y, enemyConfig.key, enemyConfig, this.path, this.worldLayer);
-    this.enemiesActive++;
+    this.registerEnemy(enemy);
     
+    this.enemiesSpawned++;
+    this.emit('enemySpawned', enemy);
+
+    if (this.enemiesSpawned === this.enemiesInWave) {
+      this.spawnBoss(enemyConfig);
+    }
+
+    this.checkWaveProgress();
+  }
+
+  private spawnBoss(baseEnemyConfig: any) {
+    const startPoint = this.path[0];
+    if (!startPoint) return;
+
+    const skeletonConfig = CONSTANTS.ENEMIES.find((enemy) => enemy.key === 'skeleton') ?? CONSTANTS.ENEMIES[0];
+    if (!skeletonConfig) return;
+
+    const bossConfig = {
+      ...baseEnemyConfig,
+      name: 'Happy Boss',
+      hp: baseEnemyConfig.hp * 5,
+      speed: skeletonConfig.speed / 2,
+      reward: baseEnemyConfig.reward * 5,
+      isBoss: true
+    };
+
+    const boss = new Enemy(
+      this.scene,
+      startPoint.x,
+      startPoint.y,
+      baseEnemyConfig.key,
+      bossConfig,
+      this.path,
+      this.worldLayer
+    );
+
+    this.registerEnemy(boss);
+    this.emit('enemySpawned', boss);
+  }
+
+  private registerEnemy(enemy: Enemy) {
+    this.enemiesActive++;
+
     enemy.on('reachedEnd', () => {
       this.enemiesActive--;
       this.emit('enemyReachedEnd');
       this.checkWaveProgress();
     });
+
     enemy.on('killed', (reward: number) => {
       this.enemiesActive--;
       this.emit('enemyKilled', reward);
       this.checkWaveProgress();
     });
-    
-    this.enemiesSpawned++;
-    this.emit('enemySpawned', enemy);
-    this.checkWaveProgress();
   }
 
   private checkWaveProgress() {

@@ -10,8 +10,11 @@ export class Tower extends Phaser.GameObjects.Sprite {
   public fireRate: number;
   public nextFire: number = 0;
   public damage: number;
+  public hp: number = 100;
+  public maxHp: number = 100;
   public target: Enemy | null = null;
   public rangeGraphic: Phaser.GameObjects.Graphics;
+  public healthBar: Phaser.GameObjects.Graphics;
   private worldLayer?: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene, x: number, y: number, key: string, config: any, worldLayer?: Phaser.GameObjects.Container) {
@@ -37,6 +40,9 @@ export class Tower extends Phaser.GameObjects.Sprite {
     this.rangeGraphic.strokeCircle(this.x, this.y, this.range);
     this.rangeGraphic.setVisible(false);
     this.rangeGraphic.setDepth(2000); // Higher depth to be visible above everything
+    this.healthBar = scene.add.graphics();
+    if (worldLayer) worldLayer.add(this.healthBar);
+    this.drawHealthBar();
 
     this.setInteractive();
     this.on('pointerover', () => {
@@ -51,6 +57,8 @@ export class Tower extends Phaser.GameObjects.Sprite {
   }
 
   update(time: number, enemies: Enemy[], projectiles: Phaser.GameObjects.Group) {
+    if (!this.active) return;
+
     if (time > this.nextFire) {
       this.findTarget(enemies);
       if (this.target && this.target.active) {
@@ -59,6 +67,8 @@ export class Tower extends Phaser.GameObjects.Sprite {
       }
     }
     this.rangeGraphic.setDepth(this.depth + 1);
+    this.healthBar.setDepth(this.depth + 2);
+    this.drawHealthBar();
   }
 
   findTarget(enemies: Enemy[]) {
@@ -95,7 +105,33 @@ export class Tower extends Phaser.GameObjects.Sprite {
     }
   }
 
+  takeDamagePercent(percent: number) {
+    const damage = this.maxHp * percent;
+    this.hp = Math.max(0, this.hp - damage);
+    this.drawHealthBar();
+
+    this.setTint(0xff9999);
+    this.scene.time.delayedCall(120, () => {
+      if (this.active) this.clearTint();
+    });
+
+    if (this.hp <= 0) {
+      this.destroy();
+    }
+  }
+
+  private drawHealthBar() {
+    if (!this.active) return;
+
+    this.healthBar.clear();
+    this.healthBar.fillStyle(0x000000, 0.55);
+    this.healthBar.fillRect(this.x - 26, this.y - 72, 52, 8);
+    this.healthBar.fillStyle(0x33ff99, 1);
+    this.healthBar.fillRect(this.x - 26, this.y - 72, (this.hp / this.maxHp) * 52, 8);
+  }
+
   destroy() {
+    this.healthBar.destroy();
     this.rangeGraphic.destroy();
     super.destroy();
   }

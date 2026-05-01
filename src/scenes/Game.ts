@@ -427,6 +427,10 @@ export class Game extends Phaser.Scene {
       enemy.on('killed', () => {
         this.createDeathEffect(enemy.x, enemy.y);
       });
+      enemy.on('bossHit', (amount: number) => {
+        this.money += amount;
+        this.uiManager.updateMoney(this.money);
+      });
     });
 
     this.waveManager.on('enemyKilled', (reward: number) => {
@@ -515,7 +519,8 @@ export class Game extends Phaser.Scene {
     const towerConfig: TowerConfig | null = this.uiManager.selectedTower;
     if (!towerConfig) return;
 
-    const cell = this.grid[`${row},${col}`];
+    const cellKey = `${row},${col}`;
+    const cell = this.grid[cellKey];
     if (!cell || cell.isOccupied || cell.isPath) {
       // Visual feedback for failed placement (could add a sound here)
       return;
@@ -528,6 +533,12 @@ export class Game extends Phaser.Scene {
       const tower = new Tower(this, cell.x, cell.y, towerConfig.key, towerConfig, this.worldLayer);
       this.towers.add(tower);
       cell.isOccupied = true;
+      tower.once(Phaser.GameObjects.Events.DESTROY, () => {
+        const gridCell = this.grid[cellKey];
+        if (gridCell) {
+          gridCell.isOccupied = false;
+        }
+      });
       
       // Clear ghost tower
       this.ghostTower?.destroy();
@@ -569,7 +580,7 @@ export class Game extends Phaser.Scene {
       }
     }
 
-    this.enemies.getChildren().forEach((enemy: any) => enemy.update());
+    this.enemies.getChildren().forEach((enemy: any) => enemy.update(this.towers.getChildren()));
     this.towers.getChildren().forEach((tower: any) => {
       tower.update(time, this.enemies.getChildren() as Enemy[], this.projectiles);
     });
