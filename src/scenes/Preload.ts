@@ -41,6 +41,9 @@ export class Preload extends Phaser.Scene {
     this.createEmojiTexture('slime', '😈');
     this.createEmojiTexture('skeleton', '💀');
     this.createEmojiTexture('bat', '🧛');
+    this.createEmojiTexture('clown', '🤡');
+    this.createEmojiTexture('frog', '🐸');
+    this.createEmojiTexture('chicken', '🐔');
     
     // Create neon tile
     this.createNeonTile();

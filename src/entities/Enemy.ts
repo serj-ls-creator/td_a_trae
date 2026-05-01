@@ -7,6 +7,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   public speed: number;
   public reward: number;
   public isBoss: boolean;
+  public isThrower: boolean;
   public pathIndex: number = 0;
   public path: Phaser.Math.Vector2[] = [];
   public healthBar: Phaser.GameObjects.Graphics;
@@ -15,6 +16,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private nextBossAttackAt: number = 0;
   private readonly bossAttackCooldownMs: number = 2200;
   private readonly bossAttackRange: number = CONSTANTS.TOWERS.find((tower) => tower.key === 'flower')?.range ?? 100;
+  private nextThrowerAttackAt: number = 0;
+  private readonly throwerAttackCooldownMs: number = 2600;
+  private readonly throwerAttackRange: number = 150;
 
   constructor(scene: Phaser.Scene, x: number, y: number, key: string, config: any, path: Phaser.Math.Vector2[], worldLayer?: Phaser.GameObjects.Container) {
     super(scene, x, y, key);
@@ -30,6 +34,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.speed = config.speed;
     this.reward = config.reward;
     this.isBoss = Boolean(config.isBoss);
+    this.isThrower = Boolean(config.isThrower);
     this.path = path;
     this.healthBar = scene.add.graphics();
     if (worldLayer) worldLayer.add(this.healthBar);
@@ -39,6 +44,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.isBoss) {
       this.setVisible(false);
       this.createBossVisual(worldLayer);
+    } else if (this.isThrower) {
+      // Визуально отличаем "кидающегося" монстра.
+      this.setTint(0xffaa33);
     }
   }
 
@@ -63,6 +71,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.isBoss && this.active) {
       this.updateBossVisual();
       this.tryBossAttack(towers);
+    }
+    if (this.isThrower && this.active) {
+      this.tryThrowerAttack(towers);
     }
 
     this.setDepth(this.y);
@@ -247,6 +258,59 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         poop.destroy();
         if (target.active) {
           target.takeDamagePercent(0.2);
+        }
+      }
+    });
+  }
+
+  private tryThrowerAttack(towers?: Phaser.GameObjects.GameObject[]) {
+    if (!towers || towers.length === 0) return;
+    if (this.scene.time.now < this.nextThrowerAttackAt) return;
+
+    const target = this.findClosestTowerInRange(towers, this.throwerAttackRange);
+    if (!target) return;
+
+    this.nextThrowerAttackAt = this.scene.time.now + this.throwerAttackCooldownMs;
+    this.shootSpit(target);
+  }
+
+  private findClosestTowerInRange(towers: Phaser.GameObjects.GameObject[], range: number) {
+    let closest: any = null;
+    let minDistance = range;
+
+    towers.forEach((tower: any) => {
+      if (!tower?.active) return;
+      if (typeof tower.takeDamagePercent !== 'function') return;
+
+      const dist = Phaser.Math.Distance.Between(this.x, this.y, tower.x, tower.y);
+      if (dist <= minDistance) {
+        minDistance = dist;
+        closest = tower;
+      }
+    });
+
+    return closest;
+  }
+
+  private shootSpit(target: any) {
+    const spit = this.scene.add.graphics();
+    spit.setDepth(this.depth + 3);
+
+    spit.fillStyle(0x9b6a3a, 1);
+    spit.fillCircle(0, 0, 6);
+    spit.setPosition(this.x, this.y - 56);
+
+    this.scene.tweens.add({
+      targets: spit,
+      x: target.x,
+      y: target.y - 45,
+      duration: 480,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        spit.destroy();
+        if (target.active) {
+          // Кидающийся монстр снимает 10% жизни башни.
+          target.takeDamagePercent(0.1);
         }
       }
     });

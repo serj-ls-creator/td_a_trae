@@ -23,7 +23,8 @@ export class WaveManager extends Phaser.Events.EventEmitter {
       return;
     }
     this.currentWave++;
-    this.enemiesInWave = this.currentWave * 5;
+    // Базовые + "смешные": с каждой новой волной +1 такой монстр.
+    this.enemiesInWave = this.getBaseEnemiesInWave() + this.getFunnyEnemiesInWave();
     this.enemiesSpawned = 0;
     // Removed reset of enemiesActive to keep track of enemies from previous waves
     this.emit('waveStart', this.currentWave);
@@ -37,7 +38,21 @@ export class WaveManager extends Phaser.Events.EventEmitter {
   }
 
   spawnEnemy() {
-    const enemyConfig = CONSTANTS.ENEMIES[Phaser.Math.Between(0, CONSTANTS.ENEMIES.length - 1)];
+    const baseEnemyConfig = this.getEnemyConfigForCurrentSpawn();
+    const waveMultiplier = this.getWaveStrengthMultiplier();
+    let enemyConfig: any = {
+      ...baseEnemyConfig,
+      hp: Math.max(1, Math.round(baseEnemyConfig.hp * waveMultiplier))
+    };
+
+    // С 5-й волны первый "смешной" монстр становится кидателем (10% урон башням).
+    if (this.currentWave >= 5 && this.isFirstFunnySpawn()) {
+      enemyConfig = {
+        ...enemyConfig,
+        name: `${enemyConfig.name} Thrower`,
+        isThrower: true
+      };
+    }
     const startPoint = this.path[0];
     if (!startPoint) return;
     
@@ -48,25 +63,27 @@ export class WaveManager extends Phaser.Events.EventEmitter {
     this.emit('enemySpawned', enemy);
 
     if (this.enemiesSpawned === this.enemiesInWave) {
-      this.spawnBoss(enemyConfig);
+      this.spawnBoss();
     }
 
     this.checkWaveProgress();
   }
 
-  private spawnBoss(baseEnemyConfig: any) {
+  private spawnBoss() {
     const startPoint = this.path[0];
     if (!startPoint) return;
 
     const skeletonConfig = CONSTANTS.ENEMIES.find((enemy) => enemy.key === 'skeleton') ?? CONSTANTS.ENEMIES[0];
     if (!skeletonConfig) return;
 
+    const waveMultiplier = this.getWaveStrengthMultiplier();
+    const bossBaseConfig = CONSTANTS.ENEMIES[Phaser.Math.Between(0, CONSTANTS.ENEMIES.length - 1)];
     const bossConfig = {
-      ...baseEnemyConfig,
+      ...bossBaseConfig,
       name: 'Happy Boss',
-      hp: baseEnemyConfig.hp * 5,
+      hp: Math.max(1, Math.round(bossBaseConfig.hp * waveMultiplier)) * 5,
       speed: skeletonConfig.speed / 2,
-      reward: baseEnemyConfig.reward * 5,
+      reward: bossBaseConfig.reward * 5,
       isBoss: true
     };
 
@@ -74,7 +91,7 @@ export class WaveManager extends Phaser.Events.EventEmitter {
       this.scene,
       startPoint.x,
       startPoint.y,
-      baseEnemyConfig.key,
+      bossBaseConfig.key,
       bossConfig,
       this.path,
       this.worldLayer
@@ -115,5 +132,36 @@ export class WaveManager extends Phaser.Events.EventEmitter {
 
   getCurrentWave() {
     return this.currentWave;
+  }
+
+  private getWaveStrengthMultiplier() {
+    return 1 + Math.max(0, this.currentWave - 1) * 0.05;
+  }
+
+  private getBaseEnemiesInWave() {
+    return this.currentWave * 5;
+  }
+
+  private getFunnyEnemiesInWave() {
+    return this.currentWave;
+  }
+
+  private isFunnySpawn(spawnIndex: number) {
+    return spawnIndex >= this.getBaseEnemiesInWave();
+  }
+
+  private isFirstFunnySpawn() {
+    return this.enemiesSpawned === this.getBaseEnemiesInWave();
+  }
+
+  private getEnemyConfigForCurrentSpawn() {
+    const spawnIndex = this.enemiesSpawned;
+    if (!this.isFunnySpawn(spawnIndex)) {
+      return CONSTANTS.ENEMIES[Phaser.Math.Between(0, CONSTANTS.ENEMIES.length - 1)];
+    }
+
+    const funnyIndex = spawnIndex - this.getBaseEnemiesInWave();
+    const funnyConfig = CONSTANTS.FUNNY_ENEMIES[funnyIndex % CONSTANTS.FUNNY_ENEMIES.length];
+    return funnyConfig ?? CONSTANTS.ENEMIES[0];
   }
 }

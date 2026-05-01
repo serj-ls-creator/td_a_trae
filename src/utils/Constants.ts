@@ -35,4 +35,9 @@ export const CONSTANTS = {
     { name: 'Skeleton', hp: 120, speed: 1.2, reward: 20, key: 'skeleton' },
     { name: 'Bat', hp: 40, speed: 2.5, reward: 15, key: 'bat' },
   ] as EnemyConfig[],
+  FUNNY_ENEMIES: [
+    { name: 'Clown', hp: 85, speed: 1.4, reward: 18, key: 'clown' },
+    { name: 'Frog', hp: 70, speed: 1.9, reward: 16, key: 'frog' },
+    { name: 'Chicken', hp: 65, speed: 2.1, reward: 17, key: 'chicken' }
+  ] as EnemyConfig[],
 };
