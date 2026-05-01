@@ -1,9 +1,9 @@
-const CACHE_NAME = 'phantom-td-v1';
-const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icons/app-icon.svg'];
+const CACHE_NAME = 'phantom-td-v2';
+const STATIC_ASSETS = ['./manifest.webmanifest', './icons/app-icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
@@ -23,6 +23,20 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Для HTML всегда сеть в приоритете, чтобы не залипать на старом бандле.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', responseClone));
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
